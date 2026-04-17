@@ -1,0 +1,18 @@
+{
+  "name": "opencfd",
+  "version": "0.1.0",
+  "description": "Generate, validate, and compile 3CX Call Flow Designer projects from natural-language descriptions.",
+  "author": {
+    "name": "Amen",
+    "email": "amouzou@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "3cx",
+    "cfd",
+    "call-flow-designer",
+    "ivr",
+    "telephony",
+    "voip"
+  ]
+}

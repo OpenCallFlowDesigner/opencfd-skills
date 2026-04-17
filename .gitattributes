@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+# 3CX CFD source files are Windows-origin and CFD Studio expects CRLF.
+# Preserve line endings verbatim.
+*.cfdproj  -text
+*.flow     -text
+*.comp     -text
+*.dialer   -text
+references/3cx-official-demos/** -text

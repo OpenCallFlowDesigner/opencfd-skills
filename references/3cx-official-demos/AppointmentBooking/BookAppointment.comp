@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<File>
+  <Version>2.1</Version>
+  <Variables>
+    <ArrayOfVariable xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <Variable>
+        <Name>ContactID</Name>
+        <Scope>Private</Scope>
+        <ShowScopeProperty>true</ShowScopeProperty>
+        <DebuggerVisible>true</DebuggerVisible>
+      </Variable>
+      <Variable>
+        <Name>OwnerID</Name>
+        <Scope>Private</Scope>
+        <ShowScopeProperty>true</ShowScopeProperty>
+        <DebuggerVisible>true</DebuggerVisible>
+      </Variable>
+      <Variable>
+        <Name>FirstName</Name>
+        <Scope>Private</Scope>
+        <ShowScopeProperty>true</ShowScopeProperty>
+        <DebuggerVisible>true</DebuggerVisible>
+      </Variable>
+      <Variable>
+        <Name>LastName</Name>
+        <Scope>Private</Scope>
+        <ShowScopeProperty>true</ShowScopeProperty>
+        <DebuggerVisible>true</DebuggerVisible>
+      </Variable>
+      <Variable>
+        <Name>Section</Name>
+        <Scope>Private</Scope>
+        <ShowScopeProperty>true</ShowScopeProperty>
+        <DebuggerVisible>true</DebuggerVisible>
+      </Variable>
+      <Variable>
+        <Name>EventName</Name>
+        <Scope>Private</Scope>
+        <ShowScopeProperty>true</ShowScopeProperty>
+        <DebuggerVisible>true</DebuggerVisible>
+      </Variable>
+      <Variable>
+        <Name>EventDescription</Name>
+        <Scope>Private</Scope>
+        <ShowScopeProperty>true</ShowScopeProperty>
+        <DebuggerVisible>true</DebuggerVisible>
+      </Variable>
+    </ArrayOfVariable>
+  </Variables>
+  <Flows>
+    <MainFlow>
+      <ns0:MainFlow Description="Callflow execution path." DebugModeActive="False" x:Name="BookAppointment" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=16.0.0.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e">
+        <ns0:CRMLookupComponent ResponseMappingsList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfResponseMapping xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;ResponseMapping&gt;&lt;Path&gt;result[0].ID&lt;/Path&gt;&lt;Variable&gt;callflow$.ContactID&lt;/Variable&gt;&lt;/ResponseMapping&gt;&lt;ResponseMapping&gt;&lt;Path&gt;result[0].NAME&lt;/Path&gt;&lt;Variable&gt;callflow$.FirstName&lt;/Variable&gt;&lt;/ResponseMapping&gt;&lt;ResponseMapping&gt;&lt;Path&gt;result[0].LAST_NAME&lt;/Path&gt;&lt;Variable&gt;callflow$.LastName&lt;/Variable&gt;&lt;/ResponseMapping&gt;&lt;ResponseMapping&gt;&lt;Path&gt;result[0].CREATED_BY_ID&lt;/Path&gt;&lt;Variable&gt;callflow$.OwnerID&lt;/Variable&gt;&lt;/ResponseMapping&gt;&lt;/ArrayOfResponseMapping&gt;" x:Name="GetContactDetails" Entity="Contacts" DebugModeActive="False" LookupInputParameter="&quot;1122334455&quot;" LookupBy="EntityNumber" />
+        <ns0:WebInteractionComponent URI="&quot;https://b24-js4hvg.bitrix24.com/rest/1/48zc6xfeiwng9eje/calendar.section.get&quot;" HttpRequestType="POST" Timeout="30" HeaderList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfParameter xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; /&gt;" Content="CONCATENATE(&quot;{ \&quot;type\&quot;: \&quot;user\&quot;, \&quot;ownerId\&quot;: \&quot;&quot;,callflow$.OwnerID,&quot;\&quot;}&quot;)" DebugModeActive="False" ContentType="application/json" x:Name="GetCalendarSection" />
+        <ns0:JsonXmlParserComponent ResponseMappingsList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfResponseMapping xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;ResponseMapping&gt;&lt;Path&gt;result[0].ID&lt;/Path&gt;&lt;Variable&gt;callflow$.Section&lt;/Variable&gt;&lt;/ResponseMapping&gt;&lt;/ArrayOfResponseMapping&gt;" Input="GetCalendarSection.ResponseContent" DebugModeActive="False" TextType="JSON" x:Name="ParseCalendarSection" />
+        <ns0:ExecuteCSharpCodeComponent ReturnsValue="True" Code="return ((DateTime)startDt).ToUniversalTime().ToString(&quot;yyyy-MM-ddTHH:mm:ssZ&quot;);" ParameterList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfScriptParameter xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;ScriptParameter&gt;&lt;Name&gt;startDt&lt;/Name&gt;&lt;Value&gt;project$.AppointmentDate&lt;/Value&gt;&lt;Type&gt;Object&lt;/Type&gt;&lt;/ScriptParameter&gt;&lt;/ArrayOfScriptParameter&gt;" MethodName="FormatStartDt" DebugModeActive="False" x:Name="FormatStartDt" />
+        <ns0:ExecuteCSharpCodeComponent ReturnsValue="True" Code="DateTime endDt = ((DateTime)startDt).AddMinutes(30);&#xD;&#xA;return endDt.ToUniversalTime().ToString(&quot;yyyy-MM-ddTHH:mm:ssZ&quot;);" ParameterList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfScriptParameter xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;ScriptParameter&gt;&lt;Name&gt;startDt&lt;/Name&gt;&lt;Value&gt;project$.AppointmentDate&lt;/Value&gt;&lt;Type&gt;Object&lt;/Type&gt;&lt;/ScriptParameter&gt;&lt;/ArrayOfScriptParameter&gt;" MethodName="FormatEndDt" DebugModeActive="False" x:Name="FormatEndDt" />
+        <ns0:VariableAssignmentComponent VariableName="callflow$.EventName" DebugModeActive="False" Expression="CONCATENATE(&quot;New CFD event for &quot;,callflow$.FirstName,&quot; &quot;,callflow$.LastName)" x:Name="SetEventName" />
+        <ns0:VariableAssignmentComponent VariableName="callflow$.EventDescription" DebugModeActive="False" Expression="CONCATENATE(&quot;The contact &quot;,callflow$.FirstName,&quot; &quot;,callflow$.LastName,&quot; has requested an appointment.&quot;)" x:Name="SetEventDescription" />
+        <ns0:WebInteractionComponent URI="&quot;https://b24-js4hvg.bitrix24.com/rest/1/48zc6xfeiwng9eje/calendar.event.add&quot;" HttpRequestType="POST" Timeout="30" HeaderList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfParameter xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; /&gt;" Content="CONCATENATE(&quot;{ \&quot;type\&quot;: \&quot;user\&quot;, \&quot;ownerId\&quot;: \&quot;&quot;,callflow$.OwnerID,&quot;\&quot;, \&quot;name\&quot;: \&quot;&quot;,callflow$.EventName,&quot;\&quot;, \&quot;description\&quot;: \&quot;&quot;,callflow$.EventDescription,&quot;\&quot;, \&quot;from\&quot;: \&quot;&quot;,FormatStartDt.ReturnValue,&quot;\&quot;, \&quot;to\&quot;: \&quot;&quot;,FormatEndDt.ReturnValue,&quot;\&quot;, \&quot;section\&quot;: &quot;,callflow$.Section,&quot;}&quot;)" DebugModeActive="False" ContentType="application/json" x:Name="RequestAppointment" />
+        <ns0:ConditionalComponent DebugModeActive="False" x:Name="CheckBookingResult">
+          <ns0:ConditionalComponentBranch Condition="EQUAL(RequestAppointment.ResponseStatusCode,200)" Description="Execution path when the specified condition is met." DebugModeActive="False" x:Name="BookingOK">
+            <ns0:PromptPlaybackComponent AcceptDtmfInput="True" DebugModeActive="False" PromptList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfPrompt xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;Prompt xsi:type=&quot;TextToSpeechAudioPrompt&quot;&gt;&lt;VoiceName&gt;en-US-Standard-C&lt;/VoiceName&gt;&lt;VoiceType&gt;Standard&lt;/VoiceType&gt;&lt;Format&gt;Text&lt;/Format&gt;&lt;Text&gt;&quot;The appointment has been successfully booked. Have a nice day!&quot;&lt;/Text&gt;&lt;/Prompt&gt;&lt;/ArrayOfPrompt&gt;" x:Name="ConfirmBooking" />
+          </ns0:ConditionalComponentBranch>
+          <ns0:ConditionalComponentBranch Condition="" Description="Execution path when the specified condition is met." DebugModeActive="False" x:Name="BookingError">
+            <ns0:PromptPlaybackComponent AcceptDtmfInput="True" DebugModeActive="False" PromptList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfPrompt xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;Prompt xsi:type=&quot;TextToSpeechAudioPrompt&quot;&gt;&lt;VoiceName&gt;en-US-Standard-C&lt;/VoiceName&gt;&lt;VoiceType&gt;Standard&lt;/VoiceType&gt;&lt;Format&gt;Text&lt;/Format&gt;&lt;Text&gt;&quot;Sorry, the appointment could not be booked. Please try with a human agent!&quot;&lt;/Text&gt;&lt;/Prompt&gt;&lt;/ArrayOfPrompt&gt;" x:Name="PlayError" />
+            <ns0:TransferComponent TransferToVoicemail="False" Destination="800" DebugModeActive="False" DelayMilliseconds="0" x:Name="TransferToAgent" />
+          </ns0:ConditionalComponentBranch>
+        </ns0:ConditionalComponent>
+      </ns0:MainFlow>
+    </MainFlow>
+    <ErrorHandlerFlow>
+      <ns0:ErrorHandlerFlow Description="Execution path when an error ocurrs." DebugModeActive="False" x:Name="BookAppointment" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=16.0.0.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e" />
+    </ErrorHandlerFlow>
+    <DisconnectHandlerFlow>
+      <ns0:DisconnectHandlerFlow Description="Execution path since the call gets disconnected." DebugModeActive="False" x:Name="BookAppointment" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=16.0.0.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e" />
+    </DisconnectHandlerFlow>
+  </Flows>
+</File>

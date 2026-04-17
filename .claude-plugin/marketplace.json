@@ -1,0 +1,19 @@
+{
+  "name": "opencfd",
+  "owner": {
+    "name": "Amen",
+    "email": "amouzou@gmail.com"
+  },
+  "metadata": {
+    "description": "3CX Call Flow Designer tooling for Claude Code.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "opencfd",
+      "source": "./",
+      "description": "Generate, validate, and compile 3CX CFD projects.",
+      "version": "0.1.0"
+    }
+  ]
+}
