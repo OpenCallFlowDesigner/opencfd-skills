@@ -4,6 +4,13 @@ All notable changes to this plugin are documented here. Format based on [Keep a 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-17
+
+### Fixed
+- README documented the slash commands without their plugin namespace —
+  they are invoked as `/opencfd:cfd-design`, `/opencfd:cfd-validate`, and
+  `/opencfd:cfd-build`.
+
 ## [0.1.0] - 2026-04-17
 
 ### Added

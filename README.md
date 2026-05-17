@@ -8,9 +8,9 @@ Describe a call flow in plain English; opencfd produces the `.cfdproj` and `Main
 
 | Command | What it does |
 |---|---|
-| `/cfd-design` | Generate a full CFD source project (`.cfdproj`, `Main.flow`, `Audio/`, `Makefile`) from a call flow description |
-| `/cfd-build` | Compile a source project into a deployable `.zip` (`manifest.xml` + `Sources/Main.cs` + `Audio/*.wav`) |
-| `/cfd-validate` | Lint a project for common CFD Studio errors |
+| `/opencfd:cfd-design` | Generate a full CFD source project (`.cfdproj`, `Main.flow`, `Audio/`, `Makefile`) from a call flow description |
+| `/opencfd:cfd-build` | Compile a source project into a deployable `.zip` (`manifest.xml` + `Sources/Main.cs` + `Audio/*.wav`) |
+| `/opencfd:cfd-validate` | Lint a project for common CFD Studio errors |
 
 Plus:
 - **Auto-validation** on every `.flow` / `.cfdproj` write — the hook catches mistakes before you do.
@@ -32,7 +32,7 @@ opencfd is an open-source (MIT) Claude Code plugin, hosted at [github.com/OpenCa
 ### Generate a project
 
 ```
-/cfd-design An IVR that plays a welcome message, asks "Sales (1) or Support (2)?",
+/opencfd:cfd-design An IVR that plays a welcome message, asks "Sales (1) or Support (2)?",
             transfers 1 to extension 200, transfers 2 to extension 300, and
             disconnects after an invalid entry.
 ```
@@ -42,7 +42,7 @@ opencfd generates the project in `projects/{Name}/` under your current working d
 ### Validate
 
 ```
-/cfd-validate projects/MyIVR
+/opencfd:cfd-validate projects/MyIVR
 ```
 
 Or call the validator directly:
@@ -55,7 +55,7 @@ python3 scripts/validate_project.py --strict projects/MyIVR # promotes mismatche
 ### Build
 
 ```
-/cfd-build projects/MyIVR
+/opencfd:cfd-build projects/MyIVR
 ```
 
 Produces `projects/MyIVR/Output/Release/MyIVR.zip` — the deployable package you upload through the 3CX management console.
