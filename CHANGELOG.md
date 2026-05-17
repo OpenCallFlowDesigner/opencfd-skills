@@ -4,6 +4,14 @@ All notable changes to this plugin are documented here. Format based on [Keep a 
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-17
+
+### Fixed
+- SPEC.md (the code-generator reference) described an obsolete
+  YAML-input / Python-generator architecture. Rewritten to describe the
+  actual cfd-design → cfd-build flow; the C# code-generation rules are
+  unchanged.
+
 ## [0.1.1] - 2026-05-17
 
 ### Fixed
