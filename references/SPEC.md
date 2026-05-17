@@ -1,12 +1,12 @@
 # 3CX CFD Code Generator Specification
 
-Version: 1.0
-Last updated: 2026-04-06
+Version: 1.1
+Last updated: 2026-05-17
 
 ## Table of Contents
 
 1. [Architecture Overview](#1-architecture-overview)
-2. [Input Format (YAML)](#2-input-format-yaml)
+2. [Input: the CFD source project](#2-input-the-cfd-source-project)
 3. [Output Format (.zip)](#3-output-format-zip)
 4. [Component Reference](#4-component-reference)
 5. [Expression Language](#5-expression-language)
@@ -17,97 +17,78 @@ Last updated: 2026-04-06
 
 ## 1. Architecture Overview
 
-### Pipeline
+This document specifies how a CFD **source project** is compiled into a
+deployable 3CX package. It is the reference the `/opencfd:cfd-build`
+command follows.
+
+### Where this fits
+
+opencfd is a Claude Code plugin. A project moves through two stages:
 
 ```
-callflow.yaml ──> Generator (Python) ──> output.zip
-                      │                      ├── manifest.xml
-                      │                      ├── Sources/Main.cs
-                      ├── validates against  └── Audio/*.wav
-                      │   callflow.schema.json
-                      └── copies from
-                          audio/ directory
+plain-English description
+        │  /opencfd:cfd-design
+        ▼
+CFD source project   ──>  .cfdproj  +  Main.flow  +  Audio/  +  Makefile
+        │  /opencfd:cfd-build   (this spec)
+        ▼
+deployable package   ──>  output.zip  ──┬── manifest.xml
+                                        ├── Sources/Main.cs
+                                        └── Audio/*.wav
 ```
 
-### Stages
+`/cfd-design` writes the editable source project — the `.cfdproj` and
+`Main.flow` XML that opens in CFD Studio. This spec covers the second step:
+turning that source project into the `Main.cs` C# the 3CX runtime executes,
+packaged as a `.zip`.
 
-1. **Parse**: Read YAML, validate against JSON Schema
-2. **Model**: Build typed component tree from parsed data
-3. **Codegen**: Render Main.cs using Jinja2 templates
-   - Emit boilerplate (identical for all projects)
-   - Emit `InitializeVariables()` from variable declarations
-   - Emit `InitializeComponents()` by walking the component tree
-   - Emit inner classes for ExecuteCSharpCode components
-4. **Package**: Assemble .zip with manifest.xml, Sources/Main.cs, Audio/*.wav
+### Build stages
 
-### Technology
+1. **Read**: load the source project — `Main.flow` (the component tree and
+   the main / error / disconnect flows) and `.cfdproj` (variables, engines).
+2. **Codegen**: emit `Main.cs` —
+   - the boilerplate shell, identical for every project (see §7),
+   - `InitializeVariables()` from the project's variable declarations,
+   - `InitializeComponents()` by walking the component tree,
+   - inner classes for any `ExecuteCSharpCode` components.
+3. **Package**: assemble the `.zip` — `manifest.xml`, `Sources/Main.cs`,
+   and the project's `Audio/*.wav`.
 
-- **Language**: Python 3.10+
-- **Templating**: Jinja2 (for the Main.cs boilerplate shell)
-- **YAML parsing**: PyYAML or ruamel.yaml
-- **Validation**: jsonschema (against callflow.schema.json)
-- **Packaging**: zipfile (stdlib)
-- **CLI**: typer or click
+The `Main.flow` / `.cfdproj` XML format itself is not described here — that
+is the `cfd-design` reference's job. This spec is concerned only with the C#
+the build step emits.
 
 ---
 
-## 2. Input Format (YAML)
+## 2. Input: the CFD source project
 
-### Top-Level Keys
+The build step consumes a **CFD source project** — the output of
+`/opencfd:cfd-design`. A project directory holds:
 
-```yaml
-name: string          # Project name (e.g., "ClaimsLookupIVR"). Used as C# namespace.
-extension: string     # 3CX extension identifier (e.g., "claimslookup")
-version: string       # CFD version string. Default: "20.2.84.0"
-
-tts_engine: none | amazon_polly    # Text-to-speech engine
-stt_engine: none                   # Speech-to-text engine (reserved)
-
-# Amazon Polly config (only if tts_engine: amazon_polly)
-amazon_polly:
-  client_id: string
-  client_secret: string
-  region: string       # e.g., "us-east-2"
-
-variables:             # User-defined variables (callflow$ scope)
-  VariableName:
-    type: string | bool | int
-    initial: value     # Initial value (quoted for strings, true/false for bool)
-
-audio:
-  dir: string          # Path to directory containing .wav files
-
-flows:
-  main: []             # List of component steps
-  error_handler: []    # List of component steps (usually empty)
-  disconnect_handler: [] # List of component steps (usually empty)
+```
+MyProject/
+├── MyProject.cfdproj    project metadata + variable declarations
+├── Main.flow            the call flow — component tree + main/error/disconnect flows
+├── Audio/               referenced .wav prompts
+└── Makefile
 ```
 
-### Component Step Format
+Everything the codegen needs lives in those two XML files:
 
-Every step in a flow is a component with a `type` discriminator:
+- **Project metadata** — name (used as the C# namespace), extension, CFD
+  version (default `20.2.84.0`), and the TTS / STT engine selection.
+- **Variables** — user-defined variables in the `callflow$` scope, each with
+  a type (`string` | `bool` | `int`) and an initial value. See §6.
+- **Flows** — three component lists: `main`, `error_handler`, and
+  `disconnect_handler` (the last two usually empty). Each is an ordered tree
+  of components.
+- **Components** — every step is a component with a type discriminator and a
+  unique name (which becomes its C# variable name). Branching components
+  (conditional, menu, loop, …) contain nested child component lists.
 
-```yaml
-- type: component_type   # Required. One of the types listed in Section 4.
-  name: string           # Required. Unique component name (becomes C# variable name).
-  # ... type-specific properties
-```
-
-### Nesting
-
-Components that support branching (conditional, menu, loop) contain child `steps` lists:
-
-```yaml
-- type: conditional
-  name: MyCondition
-  branches:
-    - name: BranchA
-      condition: "EQUAL(someVar, \"1\")"
-      steps:
-        - type: transfer
-          name: Transfer1
-          destination: '"101"'
-```
+The exact `.cfdproj` / `Main.flow` XML encoding is documented in the
+`cfd-design` reference — this spec does not repeat it. §4 below catalogues
+each component's fields and the C# the build emits for it.
 
 ---
 
@@ -137,8 +118,8 @@ output.zip
 ```
 
 - `name`: Project name lowercased, with `.Main` suffix (e.g., `claimslookupivr.Main`)
-- `extension`: From YAML `extension` field
-- `version`: From YAML `version` field (default `20.2.84.0`)
+- `extension`: the project's extension
+- `version`: the project's CFD version (default `20.2.84.0`)
 
 ### Main.cs Structure
 
@@ -181,12 +162,17 @@ Substitution points:
 
 ## 4. Component Reference
 
+Each component lists its **fields** — the properties the build reads — and
+the **C#** the build emits. The field lists use a compact indented notation
+for brevity; the on-disk encoding is the component's `Main.flow` XML (see the
+`cfd-design` reference).
+
 ### 4.1 PromptPlaybackComponent
 
 **Purpose**: Play audio prompts (WAV files or TTS).
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: prompt_playback
   name: PlayWelcome
   allow_dtmf: true          # Allow caller to interrupt with DTMF
@@ -218,8 +204,8 @@ PlayWelcome.Prompts.Add(new TextToSpeechAudioPrompt(myCall, logHeader, onlineSer
 
 **Purpose**: Present a DTMF menu with numbered options and branching.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: menu
   name: MainMenu
   allow_dtmf: true
@@ -288,8 +274,8 @@ MainMenu_Conditional.ContainerList.Add(scope.CreateComponent<SequenceContainerCo
 
 **Purpose**: Transfer the call to an extension, queue, or external number.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: transfer
   name: TransferToSales
   destination: '"101"'       # Expression. Quoted string = literal. Variable = dynamic.
@@ -311,8 +297,8 @@ TransferToSales.DelayMilliseconds = {delay};
 
 **Purpose**: Disconnect the call.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: disconnect
   name: HangUp
 ```
@@ -332,8 +318,8 @@ DisconnectCallComponent HangUp = scope.CreateComponent<DisconnectCallComponent>(
 
 **Purpose**: If/else branching based on expressions.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: conditional
   name: CheckResult
   branches:
@@ -373,8 +359,8 @@ CheckResult.ContainerList.Add(scope.CreateComponent<SequenceContainerComponent>(
 
 **Purpose**: Assign a value to a variable.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: variable_assignment
   name: SetFlag
   variable: callflow$.MyFlag        # Full variable path
@@ -396,8 +382,8 @@ SetFlag.VariableValueHandler = () => { return {value_expr}; };
 
 **Purpose**: Repeat a block of steps while a condition is true.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: loop
   name: MainLoop
   condition: callflow$.ContinueLooping   # Expression that evaluates to bool
@@ -426,8 +412,8 @@ MainLoop.Container = scope.CreateComponent<SequenceContainerComponent>("MainLoop
 
 **Purpose**: Collect DTMF digit input from the caller.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: user_input
   name: RequestPIN
   allow_dtmf: true
@@ -498,8 +484,8 @@ RequestPIN_Conditional.ContainerList.Add(scope.CreateComponent<SequenceContainer
 
 **Purpose**: Speech recognition with dictionary matching.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: voice_input
   name: AskDepartment
   dictionary: '"Sales", "Support", "Marketing"'
@@ -533,8 +519,8 @@ RequestPIN_Conditional.ContainerList.Add(scope.CreateComponent<SequenceContainer
 
 **Purpose**: Make HTTP requests to REST APIs.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: web_service
   name: LookupAccount
   method: GET | POST | PUT | DELETE
@@ -581,8 +567,8 @@ LookupAccount.Headers.Add(new CallFlow.CFD.Parameter("{header_name}", () => { re
 
 **Purpose**: Parse JSON/XML responses and extract values into variables.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: text_analyzer
   name: ParseResponse
   text_type: json | xml | detect    # Default: detect
@@ -609,8 +595,8 @@ ParseResponse.Mappings.Add("{json_path}", "{variable_name}");
 
 **Purpose**: Request ID and PIN from caller, validate against external service.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: authentication
   name: AuthCaller
   max_retries: 3
@@ -645,8 +631,8 @@ ParseResponse.Mappings.Add("{json_path}", "{variable_name}");
 
 **Purpose**: Multi-question phone survey with CSV export.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: survey
   name: CustomerFeedback
   allow_dtmf: true
@@ -699,8 +685,8 @@ ParseResponse.Mappings.Add("{json_path}", "{variable_name}");
 
 **Purpose**: Execute SQL queries against a SQL Server database.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: database
   name: ValidatePIN
   database_type: SqlServer
@@ -742,8 +728,8 @@ ValidatePIN.Timeout = {timeout};
 
 **Purpose**: Execute arbitrary C# code inline.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: execute_csharp
   name: NormalizePhone
   method: NormalizePhone           # Method name (must be unique)
@@ -795,8 +781,8 @@ NormalizePhone.Parameters.Add(new CallFlow.CFD.Parameter("rawNumber", () => { re
 
 **Purpose**: Look up contacts in the configured 3CX CRM integration.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: crm_lookup
   name: GetContact
   entity: Contacts
@@ -818,8 +804,8 @@ NormalizePhone.Parameters.Add(new CallFlow.CFD.Parameter("rawNumber", () => { re
 
 **Purpose**: Read a 3CX system global property.
 
-**YAML**:
-```yaml
+**Component fields**:
+```
 - type: get_global_property
   name: GetCRMConfig
   property_name: '"CRMINT_DEFAULT"'
@@ -840,9 +826,9 @@ GetCRMConfig.PropertyNameHandler = () => { return Convert.ToString({property_nam
 
 ### CFDFunctions
 
-Expressions in YAML map to `CFDFunctions.*` calls in generated C#. All calls are wrapped in appropriate `Convert.To*()`:
+CFD expressions map to `CFDFunctions.*` calls in the generated C#. All calls are wrapped in the appropriate `Convert.To*()`:
 
-| YAML Expression | Generated C# |
+| CFD Expression | Generated C# |
 |---|---|
 | `CONCATENATE(a, b, ...)` | `CFDFunctions.CONCATENATE(Convert.ToString(a), Convert.ToString(b), ...)` |
 | `EQUAL(a, b)` | `CFDFunctions.EQUAL(a, b)` |
@@ -869,7 +855,7 @@ Expressions in YAML map to `CFDFunctions.*` calls in generated C#. All calls are
 
 ### Expression Resolution
 
-When a YAML expression references a variable or component property:
+When a CFD expression references a variable or component property:
 
 | Reference Pattern | Generated C# |
 |---|---|
@@ -919,9 +905,9 @@ variableMap["VoiceInputResult.ValidDtmfInput"] = new Variable(VoiceInputComponen
 
 ### User Variables
 
-Declared in YAML `variables` section. Generated with `callflow$` prefix:
+Declared in the project's `variables` section. Generated with `callflow$` prefix:
 
-```yaml
+```
 variables:
   MyString:
     type: string
