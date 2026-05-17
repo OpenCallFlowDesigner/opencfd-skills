@@ -1,4 +1,4 @@
-# 3CX CFD Code Generator Specification
+# 3CX CFD Build & Code-Generation Reference
 
 Version: 1.1
 Last updated: 2026-05-17
@@ -17,9 +17,15 @@ Last updated: 2026-05-17
 
 ## 1. Architecture Overview
 
-This document specifies how a CFD **source project** is compiled into a
-deployable 3CX package. It is the reference the `/opencfd:cfd-build`
-command follows.
+opencfd's reference comes in **two halves**, one per stage of the pipeline.
+This document is the second half — if you're new, start with `cfd-design`.
+
+- **`commands/cfd-design.md`** — the **design** stage: turning a plain-English
+  description into a CFD source project (`.cfdproj` + `Main.flow` XML, plus
+  `Audio/` and a `Makefile`). It holds the full component XML reference.
+- **This document** — the **build** stage: compiling that source project into
+  the `Main.cs` C# the 3CX runtime executes, packaged as a deployable `.zip`.
+  It is the reference the `/opencfd:cfd-build` command follows.
 
 ### Where this fits
 
@@ -27,20 +33,15 @@ opencfd is a Claude Code plugin. A project moves through two stages:
 
 ```
 plain-English description
-        │  /opencfd:cfd-design
+        │  /opencfd:cfd-design   (see commands/cfd-design.md)
         ▼
 CFD source project   ──>  .cfdproj  +  Main.flow  +  Audio/  +  Makefile
-        │  /opencfd:cfd-build   (this spec)
+        │  /opencfd:cfd-build   (this document)
         ▼
 deployable package   ──>  output.zip  ──┬── manifest.xml
                                         ├── Sources/Main.cs
                                         └── Audio/*.wav
 ```
-
-`/cfd-design` writes the editable source project — the `.cfdproj` and
-`Main.flow` XML that opens in CFD Studio. This spec covers the second step:
-turning that source project into the `Main.cs` C# the 3CX runtime executes,
-packaged as a `.zip`.
 
 ### Build stages
 
