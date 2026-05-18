@@ -49,15 +49,26 @@ BRANCH_TYPES = {
 
 
 class Issue:
-    def __init__(self, level, message, location=None):
+    def __init__(self, level, message, location=None, node=None):
         self.level = level  # "error" or "warning"
         self.message = message
         self.location = location
+        # x:Name of the offending component, when the issue maps to a single
+        # node. None for project-level issues (variables, missing files).
+        self.node = node
 
     def __str__(self):
         prefix = "ERROR" if self.level == "error" else "WARN "
         loc = f" [{self.location}]" if self.location else ""
         return f"  {prefix}: {self.message}{loc}"
+
+    def to_dict(self):
+        return {
+            "level": self.level,
+            "message": self.message,
+            "location": self.location,
+            "node": self.node,
+        }
 
 
 def find_cfdproj(project_dir):
@@ -198,7 +209,8 @@ def check_duplicate_names(components):
         if name in seen:
             issues.append(Issue("error",
                 f'Duplicate component name "{name}" — '
-                f'first used by {seen[name]}, also used by {comp["tag"].split("}")[-1]}'))
+                f'first used by {seen[name]}, also used by {comp["tag"].split("}")[-1]}',
+                node=name))
         else:
             seen[name] = comp["tag"].split("}")[-1]
     return issues
@@ -219,14 +231,17 @@ def check_web_service_get(components):
             if content and not content_type:
                 issues.append(Issue("error",
                     f'WebServiceRestComponent "{comp["name"]}": GET request has Content but no ContentType — '
-                    f'"Content and ContentType are both required, or must be both empty"'))
+                    f'"Content and ContentType are both required, or must be both empty"',
+                    node=comp["name"]))
             elif content_type and not content:
                 issues.append(Issue("error",
                     f'WebServiceRestComponent "{comp["name"]}": GET request has ContentType but no Content — '
-                    f'"Content and ContentType are both required, or must be both empty"'))
+                    f'"Content and ContentType are both required, or must be both empty"',
+                    node=comp["name"]))
             elif content and content_type:
                 issues.append(Issue("error",
-                    f'WebServiceRestComponent "{comp["name"]}": GET request should have empty Content and ContentType'))
+                    f'WebServiceRestComponent "{comp["name"]}": GET request should have empty Content and ContentType',
+                    node=comp["name"]))
     return issues
 
 
@@ -244,10 +259,12 @@ def check_json_parser_input(components):
         if has_text and not has_input:
             issues.append(Issue("error",
                 f'JsonXmlParserComponent "{comp["name"]}": uses Text= attribute instead of Input= — '
-                f'causes "Input is required" error'))
+                f'causes "Input is required" error',
+                node=comp["name"]))
         elif not has_input and not has_text:
             issues.append(Issue("error",
-                f'JsonXmlParserComponent "{comp["name"]}": missing Input= attribute'))
+                f'JsonXmlParserComponent "{comp["name"]}": missing Input= attribute',
+                node=comp["name"]))
     return issues
 
 
@@ -286,13 +303,15 @@ def check_menu_options(components):
         # Check: flag set but no branch
         for opt in valid_flags - branch_options:
             issues.append(Issue("warning",
-                f'MenuComponent "{name}": IsValidOption_{opt}="True" but no matching branch'))
+                f'MenuComponent "{name}": IsValidOption_{opt}="True" but no matching branch',
+                node=name))
 
         # Check: branch exists but flag not set
         for opt in branch_options - valid_flags:
             issues.append(Issue("error",
                 f'MenuComponent "{name}": has Option{opt} branch but IsValidOption_{opt}="False" — '
-                f'option will never be accepted'))
+                f'option will never be accepted',
+                node=name))
 
     return issues
 
@@ -349,7 +368,8 @@ def check_response_mappings(components, declared_vars):
                 issues.append(Issue("error",
                     f'JsonXmlParserComponent "{comp["name"]}": response mapping targets '
                     f'"callflow$.{var_name}" but "{var_name}" is not declared — '
-                    f'CFD Studio will report "Response mapping variable name is not set to a valid variable"'))
+                    f'CFD Studio will report "Response mapping variable name is not set to a valid variable"',
+                    node=comp["name"]))
 
     return issues
 
@@ -370,7 +390,8 @@ def check_conditional_branches(components):
         if len(branches) < 2:
             if len(branches) == 1 and not branches[0].get("Condition", ""):
                 issues.append(Issue("warning",
-                    f'ConditionalComponent "{name}": single branch with no condition — always executes'))
+                    f'ConditionalComponent "{name}": single branch with no condition — always executes',
+                    node=name))
             continue
 
         for i, branch in enumerate(branches[:-1]):
@@ -379,7 +400,8 @@ def check_conditional_branches(components):
             if not condition:
                 issues.append(Issue("warning",
                     f'ConditionalComponent "{name}": branch "{branch_name}" has empty condition '
-                    f'but is not the last branch — it will catch all cases, making subsequent branches unreachable'))
+                    f'but is not the last branch — it will catch all cases, making subsequent branches unreachable',
+                    node=name))
 
     return issues
 
@@ -395,7 +417,8 @@ def check_transfer_destination(components):
         dest = elem.get("Destination", "")
         if not dest:
             issues.append(Issue("error",
-                f'TransferComponent "{comp["name"]}": missing Destination attribute'))
+                f'TransferComponent "{comp["name"]}": missing Destination attribute',
+                node=comp["name"]))
     return issues
 
 
@@ -411,11 +434,13 @@ def check_execute_csharp(components):
 
         if not elem.get("Code", "").strip():
             issues.append(Issue("error",
-                f'ExecuteCSharpCodeComponent "{name}": Code attribute is empty'))
+                f'ExecuteCSharpCodeComponent "{name}": Code attribute is empty',
+                node=name))
 
         if not elem.get("MethodName", "").strip():
             issues.append(Issue("error",
-                f'ExecuteCSharpCodeComponent "{name}": MethodName attribute is empty'))
+                f'ExecuteCSharpCodeComponent "{name}": MethodName attribute is empty',
+                node=name))
 
     return issues
 
@@ -437,12 +462,14 @@ def check_variable_assignment(components, declared_vars):
             if var_name not in declared_vars:
                 issues.append(Issue("error",
                     f'VariableAssignmentComponent "{comp["name"]}": assigns to '
-                    f'"callflow$.{var_name}" but "{var_name}" is not declared'))
+                    f'"callflow$.{var_name}" but "{var_name}" is not declared',
+                    node=comp["name"]))
 
         expr = elem.get("Expression", "")
         if not expr:
             issues.append(Issue("warning",
-                f'VariableAssignmentComponent "{comp["name"]}": Expression is empty'))
+                f'VariableAssignmentComponent "{comp["name"]}": Expression is empty',
+                node=comp["name"]))
 
     return issues
 
@@ -529,10 +556,22 @@ def main():
     parser.add_argument("project_dir", help="Path to the CFD project directory")
     parser.add_argument("--strict", action="store_true",
                         help="Promote variable-sync mismatches from warning to error")
+    parser.add_argument("--json", action="store_true",
+                        help="Emit issues as a JSON array on stdout (machine-readable). "
+                             "Each entry is {level, message, location, node}.")
     args = parser.parse_args()
 
     project_dir = args.project_dir
     if not os.path.isdir(project_dir):
+        if args.json:
+            import json
+            print(json.dumps([{
+                "level": "error",
+                "message": f"{project_dir} is not a directory",
+                "location": None,
+                "node": None,
+            }]))
+            sys.exit(1)
         print(f"Error: {project_dir} is not a directory")
         sys.exit(1)
 
@@ -541,6 +580,13 @@ def main():
 
     errors = [i for i in issues if i.level == "error"]
     warnings = [i for i in issues if i.level == "warning"]
+
+    # Machine-readable mode: stdout carries nothing but the JSON array so the
+    # api-node validator subprocess can JSON.parse it directly.
+    if args.json:
+        import json
+        print(json.dumps([i.to_dict() for i in issues]))
+        sys.exit(1 if errors else 0)
 
     print(f"\nValidating: {proj_name}")
     print("=" * 60)
