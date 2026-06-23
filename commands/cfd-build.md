@@ -77,6 +77,12 @@ Class name: `{MethodName}{Hash}ECCComponent` extending `ExternalCodeExecutionCom
 | `UserComponent` | `AbsUserComponent` subclass per referenced `.comp` (class name = `.comp` basename) — see SPEC §4.19 |
 | `MakeCallComponent` | `MakeCallComponent` (`Origin`/`Destination`/`TimeoutSeconds`; timeout in seconds) — see SPEC §4.20 |
 | `TcxSetGlobalPropertyComponent` | `TcxSetGlobalPropertyComponent` (`PropertyNameHandler` upper-cased + `PropertyValueHandler`) — see SPEC §4.21 |
+| `RecordComponent` | `RecordComponent` (`MaxTime` seconds→ms; `FileNameHandler`/`SaveToFileHandler`) — see SPEC §4.22 |
+| `EMailSenderComponent` | `EMailSenderComponent` (`To`/`Subject`/`Body` handlers; `MailAttachment`) — see SPEC §4.23 |
+| `LoggerComponent` | `LoggerComponent` (`Level` + `TextHandler`) — see SPEC §4.24 |
+| `FileManagementComponent` | `FileManagementComponent` (`Action`/`FileMode` + handlers) — see SPEC §4.25 |
+| `IncrementVariableComponent` | `IncrementVariableComponent` (`VariableName`) — see SPEC §4.26 |
+| `DateTimeConditionalComponent` | `ConditionalComponent` (date/time conditions, `{name}_{index}` containers) — see SPEC §4.27 |
 
 ## Step 5: Package
 

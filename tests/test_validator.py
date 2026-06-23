@@ -291,6 +291,49 @@ def test_set_global_property_component_is_recognized(tmp_path):
     assert any(i.level == "error" and "Duplicate" in i.message for i in issues)
 
 
+@pytest.mark.parametrize("component", [
+    '<ns0:RecordComponent x:Name="rec" SaveToFile="true" FileName="&quot;a.wav&quot;" Beep="True" TerminateByDtmf="True" MaxTime="60" DebugModeActive="False" />',
+    '<ns0:EMailSenderComponent x:Name="mail" To="&quot;a@b.com&quot;" Subject="&quot;s&quot;" Body="&quot;b&quot;" Priority="Normal" IsBodyHtml="False" IgnoreMissingAttachments="False" DebugModeActive="False" />',
+    '<ns0:LoggerComponent x:Name="log" Level="Info" Text="&quot;hi&quot;" DebugModeActive="False" />',
+    '<ns0:FileManagementComponent x:Name="fm" Action="Read" OpenMode="Open" FileName="&quot;x.txt&quot;" ReadToEnd="false" LinesToRead="1" Content="" DebugModeActive="False" />',
+    '<ns0:IncrementVariableComponent x:Name="inc" VariableName="callflow$.Index" DebugModeActive="False" />',
+])
+def test_batch_components_are_recognized(tmp_path, component):
+    """Each newly-supported component participates in duplicate-name detection."""
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=component + component),
+    )
+    issues = vp.validate_project(proj_dir)
+    assert any(i.level == "error" and "Duplicate" in i.message for i in issues)
+
+
+def test_datetime_conditional_with_branches_is_recognized(tmp_path):
+    component = (
+        '<ns0:DateTimeConditionalComponent x:Name="dtc" DebugModeActive="False">'
+        '<ns0:DateTimeConditionalComponentBranch x:Name="closed" DIDFilter="AllDIDs" '
+        'DebugModeActive="False" />'
+        '</ns0:DateTimeConditionalComponent>'
+    )
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=component),
+    )
+    issues = vp.validate_project(proj_dir)
+    assert not [i for i in issues if i.level == "error"]
+    # Both the component and its branch are collected (mirrors validate_project):
+    import xml.etree.ElementTree as ET
+    flow_root = ET.parse(os.path.join(proj_dir, "Main.flow")).getroot()
+    main_flow = flow_root.find(".//{*}MainFlow")
+    comps = []
+    for child in main_flow:
+        vp.collect_components(child, comps)
+    names = {c["name"] for c in comps}
+    assert {"dtc", "closed"} <= names
+
+
 def test_dialer_project_is_skipped(tmp_path):
     (tmp_path / "Test.cfdproj").write_text(CFDPROJ_TEMPLATE.format(vars=""))
     (tmp_path / "Main.dialer").write_text("<dialer/>")

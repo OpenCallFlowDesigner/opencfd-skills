@@ -1107,6 +1107,237 @@ not. Read the same property back with `TcxGetGlobalPropertyComponent` → `.Prop
 
 ---
 
+### 4.22 RecordComponent
+
+**Purpose**: Record audio from the caller to a WAV file (voicemail, message capture).
+
+> Verified against a real CFD Studio build (official `EMailDemo`).
+
+**Component fields** (XML attributes on `RecordComponent`):
+```
+- type: record
+  name: recordYourMessage
+  beep: true                  # play a beep before recording
+  terminate_by_dtmf: true     # any DTMF stops the recording
+  max_time: 60                # SECONDS (converted to ms in C#)
+  save_to_file: true
+  file_name: 'CONCATENATE("CallFrom_", session.ani, ".wav")'
+  prompts:
+    - type: audio_file
+      file: RecordYourMessage.wav
+```
+
+**Generated C#**:
+```csharp
+RecordComponent recordYourMessage = scope.CreateComponent<RecordComponent>("recordYourMessage");
+recordYourMessage.Beep = true;
+recordYourMessage.MaxTime = 60000;   // XML MaxTime="60" → ×1000 (seconds → ms)
+recordYourMessage.TerminateByDtmf = true;
+recordYourMessage.FileNameHandler = () => { return Convert.ToString({file_name_expr}); };
+recordYourMessage.SaveToFileHandler = () => { return Convert.ToBoolean(true); };
+recordYourMessage.Prompts.Add(new AudioFilePrompt(() => { return "RecordYourMessage.wav"; }));
+{container}.Add(recordYourMessage);
+```
+
+**Result properties**: `{name}.Result` — a `RecordComponent.RecordResults` value
+(`NothingRecorded | StopDigit | Completed`; these are the standard variables in §6).
+
+---
+
+### 4.23 EMailSenderComponent
+
+**Purpose**: Send an email, optionally with attachments (e.g. a recording).
+
+> Verified against a real CFD Studio build (official `EMailDemo`).
+
+**Component fields** (XML attributes on `EMailSenderComponent`):
+```
+- type: email
+  name: sendMail
+  to: '"destination@example.com"'
+  subject: 'CONCATENATE("New audio from Caller: ", session.ani)'
+  body: '"Please find attached the recording."'
+  is_body_html: false
+  priority: Normal
+  ignore_missing_attachments: false
+  # SMTP settings (server/port/username/password/from/enable_ssl/cc/bcc) — used only
+  # when the project is NOT configured to use the 3CX server's mail settings.
+  attachments:
+    - name: Recording.wav
+      file: 'CONCATENATE(session.audioFolder, "/CallFrom_", session.ani, ".wav")'
+```
+
+**Generated C#**:
+```csharp
+EMailSenderComponent sendMail = scope.CreateComponent<EMailSenderComponent>("sendMail");
+sendMail.UseServerSettings = true;   // when using the 3CX server's SMTP config
+sendMail.ToHandler = () => { return Convert.ToString({to_expr}); };
+sendMail.SubjectHandler = () => { return Convert.ToString({subject_expr}); };
+sendMail.BodyHandler = () => { return Convert.ToString({body_expr}); };
+sendMail.IsBodyHtml = false;
+sendMail.Priority = MessagePriority.Normal;
+sendMail.IgnoreMissingAttachments = false;
+sendMail.Attachments.Add(new MailAttachment("Recording.wav", () => { return Convert.ToString({file_expr}); }));
+{container}.Add(sendMail);
+```
+
+**Note**: in the reference build `UseServerSettings = true`, so the SMTP server/port/
+credentials come from the 3CX server config and **no** `Server`/`Port`/`UserName`/`Password`
+handlers are emitted. When server settings are not used, those XML attributes map to the
+corresponding `*Handler` properties. Each attachment becomes a `MailAttachment(name, fileHandler)`.
+
+**Result properties**: None.
+
+---
+
+### 4.24 LoggerComponent
+
+**Purpose**: Write a line to the call flow log at a chosen level.
+
+> Verified against a real CFD Studio build (official `OutboundDialerDemo`).
+
+**Component fields** (XML attributes on `LoggerComponent`):
+```
+- type: logger
+  name: logNoFreeExtensions
+  level: Info                 # Info | Warning | Error (LoggerComponent.LogLevels)
+  text: '"No free extensions, call will not be made now"'
+```
+
+**Generated C#**:
+```csharp
+LoggerComponent logNoFreeExtensions = scope.CreateComponent<LoggerComponent>("logNoFreeExtensions");
+logNoFreeExtensions.Level = LoggerComponent.LogLevels.Info;
+logNoFreeExtensions.TextHandler = () => { return Convert.ToString({text_expr}); };
+{container}.Add(logNoFreeExtensions);
+```
+
+**Result properties**: None.
+
+---
+
+### 4.25 FileManagementComponent
+
+**Purpose**: Read from or write to a file on the 3CX server (e.g. a list of numbers to dial).
+
+> Verified against a real CFD Studio build (official `OutboundDialerDemo`).
+
+**Component fields** (XML attributes on `FileManagementComponent`):
+```
+- type: file_management
+  name: readNumberToCall
+  action: Read                # Read | Write | Append (FileManagementComponent.Actions)
+  open_mode: Open             # maps to System.IO.FileMode
+  file_name: '"C:\\Path\\To\\NumbersFile\\NumbersToCall.txt"'
+  first_line_to_read: getCallIndex.ReturnValue
+  read_to_end: false
+  lines_to_read: 1
+  # for writes: content, append_final_crlf
+```
+
+**Generated C#**:
+```csharp
+FileManagementComponent readNumberToCall = scope.CreateComponent<FileManagementComponent>("readNumberToCall");
+readNumberToCall.Action = FileManagementComponent.Actions.Read;
+readNumberToCall.FileMode = System.IO.FileMode.Open;   // XML OpenMode → System.IO.FileMode
+readNumberToCall.FileNameHandler = () => { return Convert.ToString({file_name_expr}); };
+readNumberToCall.FirstLineToReadHandler = () => { return Convert.ToInt32({first_line_expr}); };
+readNumberToCall.ReadToEndHandler = () => { return Convert.ToBoolean(false); };
+readNumberToCall.LinesToReadHandler = () => { return Convert.ToInt32(1); };
+{container}.Add(readNumberToCall);
+```
+
+**Result properties**: `{name}.Result` — the content read (used downstream, e.g.
+`TRIM(readNumberToCall.Result)`).
+
+---
+
+### 4.26 IncrementVariableComponent
+
+**Purpose**: Increment a numeric variable by one. Common in loops (e.g. an index counter).
+
+> Verified against a real CFD Studio build (official `PlayDigitsDemo`, inside
+> `PlayDigits.comp`).
+
+**Component fields** (XML attributes on `IncrementVariableComponent`):
+```
+- type: increment_variable
+  name: incrementIndex
+  variable: callflow$.Index
+```
+
+**Generated C#**:
+```csharp
+IncrementVariableComponent incrementIndex = scope.CreateComponent<IncrementVariableComponent>("incrementIndex");
+incrementIndex.VariableName = "callflow$.Index";
+{container}.Add(incrementIndex);
+```
+
+**Result properties**: None (the named variable is mutated in place).
+
+---
+
+### 4.27 DateTimeConditionalComponent
+
+**Purpose**: Branch on date/time rules (office hours, day-of-week + time ranges). The
+date/time analogue of `ConditionalComponent` (§4.5).
+
+> Verified against a real CFD Studio build (official `DateTimeRouting`).
+
+**Component fields**: a `DateTimeConditionalComponent` containing one or more
+`DateTimeConditionalComponentBranch` children. Each branch carries a `DateTimeConditionList`
+(an escaped XML array of `DateTimeCondition` entries) and a `DIDFilter`:
+```
+- type: datetime_conditional
+  name: dateTimeCondition
+  branches:
+    - name: businessClosed
+      conditions: [ ServerOutOfOfficeHours ]
+      steps: [...]
+    - name: promotions
+      conditions:                      # multiple conditions are OR-ed
+        - { type: DayOfWeek, days: [Mon, Wed, Fri], from: "09:00", to: "11:59" }
+        - { type: DayOfWeek, days: [Mon, Wed, Fri], from: "14:00", to: "16:59" }
+      steps: [...]
+    - name: standard
+      conditions: [ ServerOfficeHours ]
+      steps: [...]
+```
+
+**Generated C#** — lowered to a plain `ConditionalComponent` with one `ConditionList`
+entry + numerically-suffixed container (`{name}_0`, `{name}_1`, …) per branch:
+```csharp
+ConditionalComponent dateTimeCondition = scope.CreateComponent<ConditionalComponent>("dateTimeCondition");
+{container}.Add(dateTimeCondition);
+
+// ServerOutOfOfficeHoursDateTimeCondition →
+dateTimeCondition.ConditionList.Add(() => { return Convert.ToBoolean((!officeHoursManager.IsOfficeHours())); });
+dateTimeCondition.ContainerList.Add(scope.CreateComponent<SequenceContainerComponent>("dateTimeCondition_0"));
+
+// DayOfWeekDateTimeCondition(s) — days OR-ed across the rule, times as Hour/Minute comparisons,
+// multiple conditions in the list OR-ed together →
+dateTimeCondition.ConditionList.Add(() => { return Convert.ToBoolean(((DateTime.Now.DayOfWeek == DayOfWeek.Monday || DateTime.Now.DayOfWeek == DayOfWeek.Wednesday || DateTime.Now.DayOfWeek == DayOfWeek.Friday) && (DateTime.Now.Hour > 9 || DateTime.Now.Hour == 9 && DateTime.Now.Minute >= 0) && (DateTime.Now.Hour < 11 || DateTime.Now.Hour == 11 && DateTime.Now.Minute <= 59) || /* second condition OR-ed */ )); });
+dateTimeCondition.ContainerList.Add(scope.CreateComponent<SequenceContainerComponent>("dateTimeCondition_1"));
+
+// ServerOfficeHoursDateTimeCondition →
+dateTimeCondition.ConditionList.Add(() => { return Convert.ToBoolean((officeHoursManager.IsOfficeHours())); });
+dateTimeCondition.ContainerList.Add(scope.CreateComponent<SequenceContainerComponent>("dateTimeCondition_2"));
+```
+
+**Condition mapping**:
+| `DateTimeCondition` xsi:type | Generated C# |
+|---|---|
+| `ServerOfficeHoursDateTimeCondition` | `(officeHoursManager.IsOfficeHours())` |
+| `ServerOutOfOfficeHoursDateTimeCondition` | `(!officeHoursManager.IsOfficeHours())` |
+| `DayOfWeekDateTimeCondition` | `(DayOfWeek OR-list) && (Hour/Minute ≥ From) && (Hour/Minute ≤ To)` |
+
+**Class mapping**: `DateTimeConditionalComponent` (XML) → `ConditionalComponent` (C#).
+Containers are named `{name}_{index}` (numeric), unlike §4.5 which uses branch `x:Name`.
+
+**Result properties**: None.
+
+---
+
 ## 5. Expression Language
 
 ### CFDFunctions

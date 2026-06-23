@@ -43,12 +43,17 @@ COMPONENT_TYPES = {
     f"{{{NS}}}UserComponent",
     f"{{{NS}}}MakeCallComponent",
     f"{{{NS}}}TcxSetGlobalPropertyComponent",
+    f"{{{NS}}}LoggerComponent",
+    f"{{{NS}}}FileManagementComponent",
+    f"{{{NS}}}IncrementVariableComponent",
+    f"{{{NS}}}DateTimeConditionalComponent",
 }
 
 BRANCH_TYPES = {
     f"{{{NS}}}MenuComponentBranch",
     f"{{{NS}}}ConditionalComponentBranch",
     f"{{{NS}}}ComponentBranch",
+    f"{{{NS}}}DateTimeConditionalComponentBranch",
 }
 
 
