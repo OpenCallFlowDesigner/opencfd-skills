@@ -39,6 +39,7 @@ COMPONENT_TYPES = {
     f"{{{NS}}}TcxGetGlobalPropertyComponent",
     f"{{{NS}}}RecordComponent",
     f"{{{NS}}}EMailSenderComponent",
+    f"{{{NS}}}CreditCardComponent",
 }
 
 BRANCH_TYPES = {

@@ -823,6 +823,107 @@ GetCRMConfig.PropertyNameHandler = () => { return Convert.ToString({property_nam
 
 ---
 
+### 4.18 CreditCardComponent
+
+**Purpose**: Collect a credit card number (and optionally expiration date and security
+code) from the caller over DTMF, retrying until a downstream step marks the card valid.
+Used for phone-payment / card-validation IVRs.
+
+> Verified against a real CFD Studio build (official `CreditCard` demo). The XML element
+> `CreditCardComponent` does **not** map to a single runtime component — the builder
+> lowers it into a **`CreditCardLoopComponent`** (a retry loop) plus an inner
+> `UserInputComponent` for the card number, mirroring the UserInputComponent pattern
+> (§4.8) for its branches.
+
+**Component fields** (XML attributes on `CreditCardComponent`):
+```
+- type: credit_card
+  name: requestCreditCard
+  max_retries: 3                 # → loop runs while LoopCounter < max_retries + 1
+  is_expiration_required: false
+  is_security_code_required: true
+  # Each of RequestNumber / RequestExpiration / RequestSecurityCode carries a full
+  # UserInputComponent config (min/max digits, timeouts, valid digits, prompts):
+  request_number:   { min_digits: 8, max_digits: 19, prompts: {...} }
+  request_expiration: { min_digits: 4, max_digits: 4, prompts: {...} }
+  request_security_code: { min_digits: 3, max_digits: 4, prompts: {...} }
+  branches:
+    valid:   { steps: [...] }    # card collected → e.g. WebInteraction validates it
+    invalid: { steps: [...] }    # input failed after retries
+```
+
+**Generated C#** (the loop, its number input, and the Valid/Invalid conditionals):
+```csharp
+CreditCardLoopComponent requestCreditCard = scope.CreateComponent<CreditCardLoopComponent>("requestCreditCard");
+// Loop while attempts remain AND the card has not yet been marked valid:
+requestCreditCard.Condition = () => { return Convert.ToBoolean(CFDFunctions.AND(Convert.ToBoolean(CFDFunctions.LESS_THAN((IComparable)requestCreditCard.LoopCounter,(IComparable){max_retries + 1})),Convert.ToBoolean(CFDFunctions.NOT(Convert.ToBoolean(variableMap["requestCreditCard.Validated"].Value))))); };
+requestCreditCard.Container = scope.CreateComponent<SequenceContainerComponent>("requestCreditCard_Container");
+{container}.Add(requestCreditCard);
+
+// Card-number collection — an ordinary UserInputComponent inside the loop container.
+// HasToPauseRecording = true pauses call recording during entry (PCI DTMF masking):
+UserInputComponent requestCreditCardRequestNumber = scope.CreateComponent<UserInputComponent>("requestCreditCardRequestNumber");
+requestCreditCardRequestNumber.HasToPauseRecording = true;
+requestCreditCardRequestNumber.AllowDtmfInput = true;
+requestCreditCardRequestNumber.MaxRetryCount = {max_retries - 1};   // retries-1, as §4.8
+requestCreditCardRequestNumber.FirstDigitTimeout = {first_digit_timeout};  // seconds × 1000
+requestCreditCardRequestNumber.InterDigitTimeout = {inter_digit_timeout};
+requestCreditCardRequestNumber.FinalDigitTimeout = {final_digit_timeout};
+requestCreditCardRequestNumber.MinDigits = {min_digits};
+requestCreditCardRequestNumber.MaxDigits = {max_digits};
+requestCreditCardRequestNumber.ValidDigitList.AddRange(new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' });
+requestCreditCardRequestNumber.StopDigitList.AddRange(new char[] { '#' });
+requestCreditCardRequestNumber.InitialPrompts.Add(new AudioFilePrompt(() => { return "{file}"; }));
+requestCreditCardRequestNumber.SubsequentPrompts.Add(new AudioFilePrompt(() => { return "{file}"; }));
+requestCreditCardRequestNumber.InvalidDigitPrompts.Add(new AudioFilePrompt(() => { return "{file}"; }));
+requestCreditCardRequestNumber.TimeoutPrompts.Add(new AudioFilePrompt(() => { return "{file}"; }));
+requestCreditCard.Container.ComponentList.Add(requestCreditCardRequestNumber);
+requestCreditCard.NumberHandler = () => { return requestCreditCardRequestNumber.Buffer; };
+
+// Valid-input branch (children of `branches.valid`):
+ConditionalComponent requestCreditCardRequestNumber_Conditional = scope.CreateComponent<ConditionalComponent>("requestCreditCardRequestNumber_Conditional");
+requestCreditCard.Container.ComponentList.Add(requestCreditCardRequestNumber_Conditional);
+requestCreditCardRequestNumber_Conditional.ConditionList.Add(() => { return requestCreditCardRequestNumber.Result == UserInputComponent.UserInputResults.ValidDigits; });
+requestCreditCardRequestNumber_Conditional.ContainerList.Add(scope.CreateComponent<SequenceContainerComponent>("requestCreditCardRequestNumber_Conditional_ValidInput"));
+// ... valid-branch children added to ContainerList[0].ComponentList
+// (the canonical demo validates via WebInteractionComponent, then a ConditionalComponent
+//  sets requestCreditCard.Validated = true on success — which ends the loop.)
+
+// Invalid/timeout branch (children of `branches.invalid`):
+ConditionalComponent requestCreditCard_InvalidInputConditional = scope.CreateComponent<ConditionalComponent>("requestCreditCard_InvalidInputConditional");
+requestCreditCard.Container.ComponentList.Add(requestCreditCard_InvalidInputConditional);
+requestCreditCard_InvalidInputConditional.ConditionList.Add(() => { return requestCreditCardRequestNumber.Result == UserInputComponent.UserInputResults.InvalidDigits || requestCreditCardRequestNumber.Result == UserInputComponent.UserInputResults.Timeout; });
+requestCreditCard_InvalidInputConditional.ContainerList.Add(scope.CreateComponent<SequenceContainerComponent>("requestCreditCard_InvalidInputConditional"));
+```
+
+**Class mapping**: `CreditCardComponent` (XML) → `CreditCardLoopComponent` (C#), with an
+inner `UserInputComponent` named `{name}RequestNumber`.
+
+**Naming conventions**:
+- Loop container: `{name}_Container`
+- Number input: `{name}RequestNumber`
+- Valid-input conditional: `{name}RequestNumber_Conditional`, container `{name}RequestNumber_Conditional_ValidInput`
+- Invalid-input conditional: `{name}_InvalidInputConditional`
+
+**Result properties**:
+- `{name}.Number` — collected card number (set via `NumberHandler`)
+- `{name}.Expiration` — collected expiration (MMYY), when `is_expiration_required`
+- `{name}.SecurityCode` — collected CVV, when `is_security_code_required`
+- `{name}.Validated` — bool; downstream logic must set `requestCreditCard.Validated = true` to terminate the loop
+- `{name}.LoopCounter` — current attempt index, used by the loop condition
+
+**Notes**:
+- The loop **only exits** when `Validated` is set true or attempts are exhausted
+  (`LoopCounter` reaches `max_retries + 1`). A flow that never assigns `Validated` will
+  retry until retries run out.
+- `HasToPauseRecording = true` on the number input is how 3CX keeps the PAN out of call
+  recordings; there is no separate masking flag on the component.
+- The reference build (assembly `15.x`) expands only the `RequestNumber` sub-input into
+  the flow; `Expiration`/`SecurityCode` are surfaced through the loop component's result
+  properties. Regenerate from a v20 build if a newer builder expands them differently.
+
+---
+
 ## 5. Expression Language
 
 ### CFDFunctions

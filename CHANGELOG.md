@@ -4,6 +4,20 @@ All notable changes to this plugin are documented here. Format based on [Keep a 
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-06-23
+
+### Added
+- `CreditCardComponent` support, verified against a real CFD Studio build of
+  the official CreditCard demo:
+  - SPEC.md §4.18 documents the codegen — the XML `CreditCardComponent` lowers
+    to a `CreditCardLoopComponent` (retry loop gated on a `Validated` flag) plus
+    an inner `UserInputComponent` for the card number. `HasToPauseRecording=true`
+    is the PCI DTMF-masking mechanism.
+  - `cfd-build.md` XML→C# mapping table updated.
+  - Validator now recognizes `CreditCardComponent` (participates in duplicate-name
+    and audio-reference checks instead of being silently skipped).
+  - Regression tests for recognition and duplicate-name detection.
+
 ## [0.1.2] - 2026-05-17
 
 ### Fixed

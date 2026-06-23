@@ -174,6 +174,42 @@ def test_web_service_get_with_content_is_error(tmp_path):
     assert any(i.level == "error" and "GET" in i.message for i in issues)
 
 
+def _credit_card_component(name):
+    return (
+        f'<ns0:CreditCardComponent x:Name="{name}" DebugModeActive="False" '
+        'MaxRetryCount="3" IsExpirationRequired="True" IsSecurityCodeRequired="False">'
+        '<ns0:ComponentBranch DisplayedText="Valid Input" x:Name="' + name + 'Valid" '
+        'DebugModeActive="False" />'
+        '<ns0:ComponentBranch DisplayedText="Invalid Input" x:Name="' + name + 'Invalid" '
+        'DebugModeActive="False" />'
+        '</ns0:CreditCardComponent>'
+    )
+
+
+def test_credit_card_component_is_recognized(tmp_path):
+    """A CreditCardComponent must be collected and pass validation."""
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=_credit_card_component("requestCard")),
+    )
+    issues = vp.validate_project(proj_dir)
+    errors = [i for i in issues if i.level == "error"]
+    assert not errors, [str(e) for e in errors]
+
+
+def test_duplicate_credit_card_component_names_are_error(tmp_path):
+    """Proves CreditCardComponent participates in duplicate-name detection."""
+    components = _credit_card_component("dupCard") + _credit_card_component("dupCard")
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=components),
+    )
+    issues = vp.validate_project(proj_dir)
+    assert any(i.level == "error" and "Duplicate" in i.message for i in issues)
+
+
 def test_dialer_project_is_skipped(tmp_path):
     (tmp_path / "Test.cfdproj").write_text(CFDPROJ_TEMPLATE.format(vars=""))
     (tmp_path / "Main.dialer").write_text("<dialer/>")

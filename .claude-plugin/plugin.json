@@ -1,6 +1,6 @@
 {
   "name": "opencfd",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Generate, validate, and compile 3CX Call Flow Designer projects from natural-language descriptions.",
   "author": {
     "name": "Amen",
