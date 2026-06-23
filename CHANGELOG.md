@@ -4,6 +4,22 @@ All notable changes to this plugin are documented here. Format based on [Keep a 
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-06-23
+
+### Added
+- `UserComponent` support, verified against a real CFD Studio build of the
+  official Callback demo:
+  - SPEC.md §4.19 documents the codegen — the XML `UserComponent` references a
+    `.comp` sub-flow via `RelativeFilePath`; the builder emits one
+    `AbsUserComponent` inner class per `.comp` (class name = `.comp` basename)
+    with its own variable map and per-public-property `Setter`/getter,
+    instantiated in the parent with the
+    `onlineServices/officeHoursManager/scope` constructor.
+  - `cfd-build.md` XML→C# mapping table updated.
+  - Validator now recognizes `UserComponent` and warns when a referenced
+    `.comp` file is missing (errors when `RelativeFilePath` is absent).
+  - Regression tests for recognition, missing-`.comp`, and missing-path.
+
 ## [0.1.3] - 2026-06-23
 
 ### Added

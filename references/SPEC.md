@@ -924,6 +924,122 @@ inner `UserInputComponent` named `{name}RequestNumber`.
 
 ---
 
+### 4.19 UserComponent
+
+**Purpose**: Embed a reusable sub-flow (a `.comp` file) into a flow, passing inputs in
+and reading outputs back. This is how CFD projects factor shared logic into modular,
+parameterized units (e.g. "ask for a date", "look up a contact").
+
+> Verified against a real CFD Studio build (official `Callback` demo, which embeds
+> `AskForDate.comp`, `AskForTime.comp`, `StoreCallback.comp`).
+
+**Component fields** (XML attributes on `UserComponent`):
+```
+- type: user_component
+  name: RequestDate              # x:Name — the parent's local handle
+  relative_file_path: AskForDate.comp   # the .comp sub-flow this references
+  public_properties:             # In_*/Out_* properties exposed by the .comp
+    - name: In_SelectedDate
+      value: RequestDate.Out_SelectedDate   # expression bound to an input
+    - name: Out_SelectedDateTime
+      value: ""                  # outputs declared with empty value
+```
+
+A `.comp` file is itself a flow (variables + component tree). Its **public properties**
+are the parameter surface: `In_*` are inputs the caller sets; `Out_*` are results the
+caller reads. By convention the property name carries the direction, but the builder
+treats every public property uniformly (each gets a setter and a getter).
+
+**Generated C# — parent flow** (instantiate, wire inputs, add to container):
+```csharp
+// Class name = the .comp basename. Constructor takes the shared services + scope.
+AskForDate RequestDate = new AskForDate(onlineServices, officeHoursManager, scope, "RequestDate", callflow, myCall, logHeader);
+{container}.Add(RequestDate);
+
+AskForTime RequestTime = new AskForTime(onlineServices, officeHoursManager, scope, "RequestTime", callflow, myCall, logHeader);
+// Each bound input becomes a `{PropertyName}Setter` lambda:
+RequestTime.In_SelectedDateSetter = () => { return RequestDate.Out_SelectedDate; };
+{container}.Add(RequestTime);
+// Outputs are read off the instance directly: `RequestTime.Out_SelectedDateTime`.
+```
+
+**Generated C# — inner class** (one per referenced `.comp`, appended with the other
+inner classes; ECC components used inside the sub-flow are emitted here too):
+```csharp
+public class AskForDate : AbsUserComponent
+{
+    private OnlineServices onlineServices;
+    private OfficeHoursManager officeHoursManager;
+    private CfdAppScope scope;
+
+    private ObjectExpressionHandler _HasToAskDateHandler = null;
+    private ObjectExpressionHandler _Out_SelectedDateHandler = null;
+
+    protected override void InitializeVariables()
+    {
+        componentVariableMap["callflow$.HasToAskDate"] = new Variable(true);
+        componentVariableMap["callflow$.Out_SelectedDate"] = new Variable("");
+    }
+
+    protected override void InitializeComponents()
+    {
+        Dictionary<string, Variable> variableMap = componentVariableMap;  // sub-flow uses its own map
+        {
+            // ... the .comp's own component tree (LoopComponent, VoiceInputComponent, etc.)
+            // added to mainFlowComponentList, exactly like a top-level flow.
+        }
+    }
+
+    // Applies the caller's input setters into the sub-flow's variable map before it runs:
+    protected override void GetVariableValues()
+    {
+        if (_HasToAskDateHandler != null) componentVariableMap["callflow$.HasToAskDate"].Set(_HasToAskDateHandler());
+        if (_Out_SelectedDateHandler != null) componentVariableMap["callflow$.Out_SelectedDate"].Set(_Out_SelectedDateHandler());
+    }
+
+    // One Setter + one getter per public property:
+    public ObjectExpressionHandler HasToAskDateSetter { set { _HasToAskDateHandler = value; } }
+    public object HasToAskDate { get { return componentVariableMap["callflow$.HasToAskDate"].Value; } }
+    public ObjectExpressionHandler Out_SelectedDateSetter { set { _Out_SelectedDateHandler = value; } }
+    public object Out_SelectedDate { get { return componentVariableMap["callflow$.Out_SelectedDate"].Value; } }
+
+    public AskForDate(OnlineServices onlineServices, OfficeHoursManager officeHoursManager,
+        CfdAppScope scope, string name, ICallflow callflow, ICall myCall, string logHeader) : base(name, callflow, myCall, logHeader)
+    {
+        this.onlineServices = onlineServices;
+        this.officeHoursManager = officeHoursManager;
+        this.scope = scope;
+    }
+
+    // Each user component also carries these office-hours helpers (boilerplate):
+    private bool IsServerInHoliday(ICall myCall) { /* tenant.IsHoliday(...) */ }
+    private bool IsServerOfficeHourActive(ICall myCall) { /* tenant office-hours check */ }
+}
+```
+
+**Class mapping**: `UserComponent` (XML) → an `AbsUserComponent` subclass whose **class
+name is the `.comp` file's basename** (`AskForDate.comp` → `class AskForDate`). The parent
+refers to the instance by the component's `x:Name`.
+
+**Key rules**:
+- One inner class is emitted **per distinct `.comp`** referenced, regardless of how many
+  times it is instantiated.
+- Public properties become a `{Name}Setter` (an `ObjectExpressionHandler` input) **and** a
+  `{Name}` getter. Inputs the parent binds are applied in `GetVariableValues()`; outputs
+  are read directly off the instance.
+- The sub-flow has its **own** `componentVariableMap` — its `callflow$.*` variables are
+  isolated from the parent. Aliasing `variableMap = componentVariableMap` inside
+  `InitializeComponents()` lets the sub-flow body reuse the standard codegen verbatim.
+- The constructor signature differs from `scope.CreateComponent<>` components: it is
+  `new {Class}(onlineServices, officeHoursManager, scope, "{x:Name}", callflow, myCall, logHeader)`.
+- ExecuteCSharpCode components used inside a `.comp` are emitted as `*ECCComponent` inner
+  classes (§4.15) alongside the user-component class.
+
+**Result properties**: whatever `Out_*` (and other public) properties the `.comp` declares,
+read as `{name}.{PropertyName}`.
+
+---
+
 ## 5. Expression Language
 
 ### CFDFunctions

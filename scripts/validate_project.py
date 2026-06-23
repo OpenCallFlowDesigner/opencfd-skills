@@ -40,6 +40,7 @@ COMPONENT_TYPES = {
     f"{{{NS}}}RecordComponent",
     f"{{{NS}}}EMailSenderComponent",
     f"{{{NS}}}CreditCardComponent",
+    f"{{{NS}}}UserComponent",
 }
 
 BRANCH_TYPES = {
@@ -335,6 +336,28 @@ def check_audio_files(flow_root, project_dir):
     return issues
 
 
+def check_user_component_refs(components, project_dir):
+    """Check that each UserComponent's RelativeFilePath .comp exists in the project."""
+    issues = []
+    user_comp_tag = f"{{{NS}}}UserComponent"
+    for comp in components:
+        if comp["tag"] != user_comp_tag:
+            continue
+        rel_path = comp["elem"].get("RelativeFilePath", "")
+        if not rel_path:
+            issues.append(Issue("error",
+                f'UserComponent "{comp["name"]}" has no RelativeFilePath (.comp reference)',
+                node=comp["name"]))
+            continue
+        comp_path = os.path.join(project_dir, rel_path)
+        if not os.path.isfile(comp_path):
+            issues.append(Issue("warning",
+                f'UserComponent "{comp["name"]}" references "{rel_path}" but that '
+                f'.comp file was not found in the project',
+                node=comp["name"]))
+    return issues
+
+
 def check_variable_references(flow_root, declared_vars):
     """Check that callflow$.X references point to declared variables."""
     issues = []
@@ -541,6 +564,7 @@ def validate_project(project_dir, strict=False):
     issues.extend(check_json_parser_input(components))
     issues.extend(check_menu_options(components))
     issues.extend(check_audio_files(flow_root, project_dir))
+    issues.extend(check_user_component_refs(components, project_dir))
     issues.extend(check_variable_references(flow_root, declared_vars))
     issues.extend(check_response_mappings(components, declared_vars))
     issues.extend(check_conditional_branches(components))
