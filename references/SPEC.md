@@ -1040,6 +1040,42 @@ read as `{name}.{PropertyName}`.
 
 ---
 
+### 4.20 MakeCallComponent
+
+**Purpose**: Place an outbound call from the call flow — bridge an origin extension/number
+to a destination. Used by callback and dialer flows.
+
+> Verified against a real CFD Studio build (official `Callback` demo).
+
+**Component fields** (XML attributes on `MakeCallComponent`):
+```
+- type: make_call
+  name: MakeCallback
+  origin: GetNumberToCall.ReturnValue   # expression — who to call (the party dialed first)
+  destination: '"802"'                  # expression — where to connect them once answered
+  timeout: 30                           # ring timeout in SECONDS
+```
+
+**Generated C#**:
+```csharp
+MakeCallComponent MakeCallback = scope.CreateComponent<MakeCallComponent>("MakeCallback");
+MakeCallback.OriginHandler = () => { return Convert.ToString({origin_expr}); };
+MakeCallback.DestinationHandler = () => { return Convert.ToString({destination_expr}); };
+MakeCallback.TimeoutSeconds = {timeout};   // NOTE: seconds, NOT ×1000
+{container}.Add(MakeCallback);
+```
+
+**Important**: unlike the DTMF-collection components (§4.8 etc.) whose `Timeout` is
+converted to milliseconds, `MakeCallComponent.TimeoutSeconds` takes the XML `Timeout`
+value **as-is in seconds** (`Timeout="30"` → `TimeoutSeconds = 30`).
+
+**Result properties**: placing the call raises a **MakeCallResult** event (handled by the
+flow's `ProcessMakeCallResult(bool result)` loop), so flow execution continues to the next
+component once the call attempt resolves. There is no scalar result property to read; branch
+on subsequent component results instead.
+
+---
+
 ## 5. Expression Language
 
 ### CFDFunctions

@@ -41,6 +41,7 @@ COMPONENT_TYPES = {
     f"{{{NS}}}EMailSenderComponent",
     f"{{{NS}}}CreditCardComponent",
     f"{{{NS}}}UserComponent",
+    f"{{{NS}}}MakeCallComponent",
 }
 
 BRANCH_TYPES = {

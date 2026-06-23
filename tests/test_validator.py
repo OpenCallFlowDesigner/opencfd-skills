@@ -254,6 +254,28 @@ def test_user_component_without_relative_path_is_error(tmp_path):
     )
 
 
+def test_make_call_component_is_recognized(tmp_path):
+    component = (
+        '<ns0:MakeCallComponent x:Name="doMakeCall" Origin="someVar" '
+        'Destination="&quot;800&quot;" Timeout="30" DebugModeActive="False" />'
+    )
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=component),
+    )
+    issues = vp.validate_project(proj_dir)
+    assert not [i for i in issues if i.level == "error"]
+    # Recognized → participates in duplicate detection:
+    dup = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=component + component),
+    )
+    assert any(i.level == "error" and "Duplicate" in i.message
+               for i in vp.validate_project(dup))
+
+
 def test_dialer_project_is_skipped(tmp_path):
     (tmp_path / "Test.cfdproj").write_text(CFDPROJ_TEMPLATE.format(vars=""))
     (tmp_path / "Main.dialer").write_text("<dialer/>")
