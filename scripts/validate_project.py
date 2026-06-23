@@ -42,6 +42,7 @@ COMPONENT_TYPES = {
     f"{{{NS}}}CreditCardComponent",
     f"{{{NS}}}UserComponent",
     f"{{{NS}}}MakeCallComponent",
+    f"{{{NS}}}TcxSetGlobalPropertyComponent",
 }
 
 BRANCH_TYPES = {

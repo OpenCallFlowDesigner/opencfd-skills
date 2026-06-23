@@ -1076,6 +1076,37 @@ on subsequent component results instead.
 
 ---
 
+### 4.21 TcxSetGlobalPropertyComponent
+
+**Purpose**: Write a 3CX system global property. The setter sibling of
+`TcxGetGlobalPropertyComponent` (§4.17); commonly used to persist state across calls
+(e.g. a list of scheduled callbacks).
+
+> Verified against a real CFD Studio build (official `Callback` demo).
+
+**Component fields** (XML attributes on `TcxSetGlobalPropertyComponent`):
+```
+- type: set_global_property
+  name: SetScheduledCallbacks
+  property_name: project$.GlobalPropertyName    # expression — the property key
+  property_value: 'CONCATENATE(session.ani, "=", FormatSelectedDateTime.ReturnValue)'
+```
+
+**Generated C#**:
+```csharp
+TcxSetGlobalPropertyComponent SetScheduledCallbacks = scope.CreateComponent<TcxSetGlobalPropertyComponent>("SetScheduledCallbacks");
+SetScheduledCallbacks.PropertyNameHandler = () => { return Convert.ToString({property_name_expr}).ToUpper(); };
+SetScheduledCallbacks.PropertyValueHandler = () => { return Convert.ToString({property_value_expr}); };
+{container}.Add(SetScheduledCallbacks);
+```
+
+**Note**: as with §4.17, the property **name** is upper-cased (`.ToUpper()`); the value is
+not. Read the same property back with `TcxGetGlobalPropertyComponent` → `.PropertyValue`.
+
+**Result properties**: None.
+
+---
+
 ## 5. Expression Language
 
 ### CFDFunctions

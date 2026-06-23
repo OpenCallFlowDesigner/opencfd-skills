@@ -276,6 +276,21 @@ def test_make_call_component_is_recognized(tmp_path):
                for i in vp.validate_project(dup))
 
 
+def test_set_global_property_component_is_recognized(tmp_path):
+    component = (
+        '<ns0:TcxSetGlobalPropertyComponent x:Name="SetProp" '
+        'PropertyName="project$.Key" PropertyValue="&quot;v&quot;" '
+        'DebugModeActive="False" />'
+    )
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=component + component),
+    )
+    issues = vp.validate_project(proj_dir)
+    assert any(i.level == "error" and "Duplicate" in i.message for i in issues)
+
+
 def test_dialer_project_is_skipped(tmp_path):
     (tmp_path / "Test.cfdproj").write_text(CFDPROJ_TEMPLATE.format(vars=""))
     (tmp_path / "Main.dialer").write_text("<dialer/>")

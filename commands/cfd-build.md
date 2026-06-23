@@ -76,6 +76,7 @@ Class name: `{MethodName}{Hash}ECCComponent` extending `ExternalCodeExecutionCom
 | `CreditCardComponent` | `CreditCardLoopComponent` (retry loop) + inner `UserInputComponent` for the card number — see SPEC §4.18 |
 | `UserComponent` | `AbsUserComponent` subclass per referenced `.comp` (class name = `.comp` basename) — see SPEC §4.19 |
 | `MakeCallComponent` | `MakeCallComponent` (`Origin`/`Destination`/`TimeoutSeconds`; timeout in seconds) — see SPEC §4.20 |
+| `TcxSetGlobalPropertyComponent` | `TcxSetGlobalPropertyComponent` (`PropertyNameHandler` upper-cased + `PropertyValueHandler`) — see SPEC §4.21 |
 
 ## Step 5: Package
 
