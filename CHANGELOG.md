@@ -4,6 +4,24 @@ All notable changes to this plugin are documented here. Format based on [Keep a 
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-06-23
+
+### Added
+- Eight more components, each verified against a real CFD Studio build, completing
+  coverage of every component used by the bundled demos:
+  - §4.20 `MakeCallComponent` (Callback) — `Origin`/`Destination`/`TimeoutSeconds`
+    (timeout in seconds, not ×1000).
+  - §4.21 `TcxSetGlobalPropertyComponent` (Callback) — setter sibling of §4.17.
+  - §4.22 `RecordComponent` (EMailDemo).
+  - §4.23 `EMailSenderComponent` (EMailDemo).
+  - §4.24 `LoggerComponent` (OutboundDialerDemo).
+  - §4.25 `FileManagementComponent` (OutboundDialerDemo).
+  - §4.26 `IncrementVariableComponent` (PlayDigitsDemo).
+  - §4.27 `DateTimeConditionalComponent` (DateTimeRouting) — lowers to a
+    `ConditionalComponent` with date/time conditions and `{name}_{index}` containers.
+- Validator recognizes all of the above (plus `DateTimeConditionalComponentBranch`),
+  and the cfd-build mapping table + tests are updated accordingly.
+
 ## [0.1.4] - 2026-06-23
 
 ### Added
