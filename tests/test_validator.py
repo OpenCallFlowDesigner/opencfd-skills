@@ -210,6 +210,50 @@ def test_duplicate_credit_card_component_names_are_error(tmp_path):
     assert any(i.level == "error" and "Duplicate" in i.message for i in issues)
 
 
+def _user_component(name, rel_path):
+    return (
+        f'<ns0:UserComponent RelativeFilePath="{rel_path}" Tag="" '
+        f'DebugModeActive="False" x:Name="{name}" />'
+    )
+
+
+def test_user_component_with_existing_comp_is_ok(tmp_path):
+    (tmp_path / "AskForDate.comp").write_text("<File/>", encoding="utf-8")
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=_user_component("RequestDate", "AskForDate.comp")),
+    )
+    issues = vp.validate_project(proj_dir)
+    assert not [i for i in issues if i.level == "error"]
+    assert not [i for i in issues if "comp" in i.message.lower()]
+
+
+def test_user_component_missing_comp_is_warning(tmp_path):
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=_user_component("RequestDate", "Missing.comp")),
+    )
+    issues = vp.validate_project(proj_dir)
+    assert any(
+        i.level == "warning" and "Missing.comp" in i.message for i in issues
+    )
+
+
+def test_user_component_without_relative_path_is_error(tmp_path):
+    component = '<ns0:UserComponent Tag="" DebugModeActive="False" x:Name="NoPath" />'
+    proj_dir = _write_project(
+        tmp_path,
+        CFDPROJ_TEMPLATE.format(vars=""),
+        FLOW_TEMPLATE.format(vars="", components=component),
+    )
+    issues = vp.validate_project(proj_dir)
+    assert any(
+        i.level == "error" and "RelativeFilePath" in i.message for i in issues
+    )
+
+
 def test_dialer_project_is_skipped(tmp_path):
     (tmp_path / "Test.cfdproj").write_text(CFDPROJ_TEMPLATE.format(vars=""))
     (tmp_path / "Main.dialer").write_text("<dialer/>")
