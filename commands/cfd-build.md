@@ -74,6 +74,7 @@ Class name: `{MethodName}{Hash}ECCComponent` extending `ExternalCodeExecutionCom
 | `ExecuteCSharpCodeComponent` | Inner class extending `ExternalCodeExecutionComponent` |
 | `CRMLookupComponent` | `CRMLookupComponent` + auto-paired `TextAnalyzerComponent` |
 | `CreditCardComponent` | `CreditCardLoopComponent` (retry loop) + inner `UserInputComponent` for the card number — see SPEC §4.18 |
+| `UserComponent` | `AbsUserComponent` subclass per referenced `.comp` (class name = `.comp` basename) — see SPEC §4.19 |
 
 ## Step 5: Package
 
