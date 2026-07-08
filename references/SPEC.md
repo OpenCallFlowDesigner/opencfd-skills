@@ -107,6 +107,21 @@ output.zip
     └── Main.cs
 ```
 
+### Audio bundling
+
+The `.zip` bundles **only the `.wav` files actually referenced by the compiled flow** —
+not every file in the project's `Audio/` directory. Two consequences the builder must
+honor:
+
+- **Unreferenced files are dropped.** A prompt sitting in `Audio/` that no component
+  points at is not packaged.
+- **Audio in disabled sub-flows is pruned.** If a sub-flow is switched off, its prompts
+  are excluded even though they appear in `Main.flow`. Example: with
+  `IsSecurityCodeRequired="False"` on a `CreditCardComponent`, the security-code branch is
+  not emitted, so `enter_credit_card_security_code.wav` is **not** bundled — even though the
+  XML still lists it. A naive "grep every `<AudioFileName>`" over-includes; walk the emitted
+  component tree instead.
+
 ### manifest.xml
 
 ```xml
