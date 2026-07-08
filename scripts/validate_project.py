@@ -16,6 +16,9 @@ import re
 import html
 import xml.etree.ElementTree as ET
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from wav_format import check_wav
+
 NS = "clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=20.0.0.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e"
 NS_XAML = "http://schemas.microsoft.com/winfx/2006/xaml"
 
@@ -339,6 +342,11 @@ def check_audio_files(flow_root, project_dir):
         if wav not in existing_files:
             issues.append(Issue("warning",
                 f'Audio file "{wav}" referenced in prompts but not found in Audio/'))
+        else:
+            problem = check_wav(os.path.join(audio_dir, wav))
+            if problem:
+                issues.append(Issue("error",
+                    f'Audio file "{wav}" {problem}'))
 
     return issues
 

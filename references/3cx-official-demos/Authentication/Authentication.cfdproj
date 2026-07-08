@@ -10,11 +10,21 @@
   <DebugBuildSuccessful>False</DebugBuildSuccessful>
   <ReleaseBuildSuccessful>True</ReleaseBuildSuccessful>
   <DebugBuildNumber>0</DebugBuildNumber>
-  <ReleaseBuildNumber>7</ReleaseBuildNumber>
+  <ReleaseBuildNumber>9</ReleaseBuildNumber>
   <ChangedSinceLastDebugBuild>True</ChangedSinceLastDebugBuild>
+  <DoNotAskForExtension>False</DoNotAskForExtension>
+  <Extension>authentication</Extension>
+  <OnlineServicesTextToSpeechEngine>None</OnlineServicesTextToSpeechEngine>
+  <OnlineServicesSpeechToTextEngine>None</OnlineServicesSpeechToTextEngine>
   <AmazonClientID>
   </AmazonClientID>
   <AmazonClientSecret>
   </AmazonClientSecret>
   <AmazonRegion>us-east-2</AmazonRegion>
+  <AmazonLexicons>
+  </AmazonLexicons>
+  <GoogleCloudServiceAccountKeyFileName>
+  </GoogleCloudServiceAccountKeyFileName>
+  <GoogleCloudServiceAccountKeyJSON>
+  </GoogleCloudServiceAccountKeyJSON>
 </Graphical_Application_Designer_Project>

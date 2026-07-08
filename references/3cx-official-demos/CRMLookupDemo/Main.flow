@@ -19,7 +19,7 @@
   </Variables>
   <Flows>
     <MainFlow>
-      <ns0:MainFlow Description="Callflow execution path." DebugModeActive="False" x:Name="Main" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=18.0.52.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e">
+      <ns0:MainFlow Description="Callflow execution path." DebugModeActive="False" x:Name="Main" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=20.2.84.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e">
         <ns0:TcxGetGlobalPropertyComponent Tag="" PropertyName="&quot;CRMINT_DEFAULT&quot;" DebugModeActive="False" x:Name="GetConfiguredCRM" />
         <ns0:ConditionalComponent Tag="" DebugModeActive="False" x:Name="SelectCRM">
           <ns0:ConditionalComponentBranch Condition="CONTAINS(GetConfiguredCRM.PropertyValue,&quot;amocrm&quot;)" Description="Execution path when the specified condition is met." Tag="" DebugModeActive="False" x:Name="amoCRM">
@@ -65,14 +65,14 @@
             <ns0:CRMLookupComponent ResponseMappingsList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfResponseMapping xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;ResponseMapping&gt;&lt;Path&gt;data[0].First_Name&lt;/Path&gt;&lt;Variable&gt;callflow$.FirstName&lt;/Variable&gt;&lt;/ResponseMapping&gt;&lt;ResponseMapping&gt;&lt;Path&gt;data[0].Last_Name&lt;/Path&gt;&lt;Variable&gt;callflow$.LastName&lt;/Variable&gt;&lt;/ResponseMapping&gt;&lt;/ArrayOfResponseMapping&gt;" Tag="" x:Name="GetContactFromZoho" Entity="Contacts" DebugModeActive="False" LookupInputParameter="session.ani" LookupBy="EntityNumber" />
           </ns0:ConditionalComponentBranch>
         </ns0:ConditionalComponent>
-        <ns0:PromptPlaybackComponent Tag="" AcceptDtmfInput="True" DebugModeActive="False" PromptList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfPrompt xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;Prompt xsi:type=&quot;TextToSpeechAudioPrompt&quot;&gt;&lt;VoiceName&gt;en-US-Standard-C&lt;/VoiceName&gt;&lt;VoiceType&gt;Standard&lt;/VoiceType&gt;&lt;Format&gt;Text&lt;/Format&gt;&lt;Text&gt;CONCATENATE(&quot;Hello &quot;,callflow$.FirstName,&quot; &quot;,callflow$.LastName,&quot;! Thanks for calling!&quot;)&lt;/Text&gt;&lt;/Prompt&gt;&lt;/ArrayOfPrompt&gt;" x:Name="PlayWelcome" />
+        <ns0:PromptPlaybackComponent Tag="" AcceptDtmfInput="True" DebugModeActive="False" PromptList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&lt;ArrayOfPrompt xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&lt;Prompt xsi:type=&quot;TextToSpeechAudioPrompt&quot;&gt;&lt;VoiceName&gt;Naja&lt;/VoiceName&gt;&lt;VoiceType&gt;Standard&lt;/VoiceType&gt;&lt;Format&gt;Text&lt;/Format&gt;&lt;Text&gt;CONCATENATE(&quot;Hello &quot;,callflow$.FirstName,&quot; &quot;,callflow$.LastName,&quot;! Thanks for calling!&quot;)&lt;/Text&gt;&lt;/Prompt&gt;&lt;/ArrayOfPrompt&gt;" x:Name="PlayWelcome" />
       </ns0:MainFlow>
     </MainFlow>
     <ErrorHandlerFlow>
-      <ns0:ErrorHandlerFlow Description="Execution path when an error ocurrs." DebugModeActive="False" x:Name="Main" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=18.0.52.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e" />
+      <ns0:ErrorHandlerFlow Description="Execution path when an error ocurrs." DebugModeActive="False" x:Name="Main" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=20.2.84.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e" />
     </ErrorHandlerFlow>
     <DisconnectHandlerFlow>
-      <ns0:DisconnectHandlerFlow Description="Execution path since the call gets disconnected." DebugModeActive="False" x:Name="Main" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=18.0.52.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e" />
+      <ns0:DisconnectHandlerFlow Description="Execution path since the call gets disconnected." DebugModeActive="False" x:Name="Main" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ns0="clr-namespace:TCX.CFD.Classes.Components;Assembly=3CX Call Flow Designer, Version=20.2.84.0, Culture=neutral, PublicKeyToken=7cb95a1a133e706e" />
     </DisconnectHandlerFlow>
   </Flows>
 </File>

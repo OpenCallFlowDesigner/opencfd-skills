@@ -1,0 +1,5 @@
+enter_customer_id.wav
+enter_customer_pin.wav
+invalid_digit.wav
+timeout.wav
+validation_error.wav

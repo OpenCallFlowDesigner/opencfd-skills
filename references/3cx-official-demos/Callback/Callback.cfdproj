@@ -21,9 +21,9 @@
     </ArrayOfVariable>
   </Variables>
   <DebugBuildSuccessful>False</DebugBuildSuccessful>
-  <ReleaseBuildSuccessful>False</ReleaseBuildSuccessful>
+  <ReleaseBuildSuccessful>True</ReleaseBuildSuccessful>
   <DebugBuildNumber>0</DebugBuildNumber>
-  <ReleaseBuildNumber>5</ReleaseBuildNumber>
+  <ReleaseBuildNumber>6</ReleaseBuildNumber>
   <ChangedSinceLastDebugBuild>True</ChangedSinceLastDebugBuild>
   <DoNotAskForExtension>True</DoNotAskForExtension>
   <Extension>852</Extension>
@@ -36,8 +36,6 @@
   <AmazonRegion>us-east-2</AmazonRegion>
   <AmazonLexicons>
   </AmazonLexicons>
-  <GoogleCloudServiceAccountKeyFileName>
-  </GoogleCloudServiceAccountKeyFileName>
-  <GoogleCloudServiceAccountKeyJSON>
-  </GoogleCloudServiceAccountKeyJSON>
+  <GoogleCloudServiceAccountKeyFileName>sample.json</GoogleCloudServiceAccountKeyFileName>
+  <GoogleCloudServiceAccountKeyJSON>{}</GoogleCloudServiceAccountKeyJSON>
 </Graphical_Application_Designer_Project>
