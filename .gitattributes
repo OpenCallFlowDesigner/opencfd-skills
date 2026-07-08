@@ -7,3 +7,7 @@
 *.comp     -text
 *.dialer   -text
 references/3cx-official-demos/** -text
+
+# Golden Studio build outputs are Windows-origin (CRLF). Preserve verbatim so
+# they remain a faithful byte-for-byte oracle; the golden test normalizes EOL.
+golden/** -text
