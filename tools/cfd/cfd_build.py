@@ -35,6 +35,9 @@ REPO = HERE.parent.parent
 BOILERPLATE = HERE / "boilerplate"
 PLUGIN_VALIDATOR = REPO / "scripts" / "validate_project.py"
 
+sys.path.insert(0, str(REPO / "scripts"))
+from wav_format import check_wav  # noqa: E402  (shared with the validator)
+
 # Per slot: "generate" (driven by Main.flow) or "pin" (emit golden reference verbatim).
 # Flip a slot to "generate" only once its generator reproduces the golden byte-for-byte.
 # NOTE: all three slots are PINNED to the golden reference in this scaffold. The
@@ -166,11 +169,18 @@ def package(project: Project, main_cs: str, manifest: str) -> Path:
     audio_dir = project.dir / "Audio"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("manifest.xml", manifest)
+        bad = []
         for wav in project.referenced_audio():
             src = audio_dir / wav
             if not src.exists():
                 sys.exit(f"package: referenced audio missing on disk: {wav}")
+            problem = check_wav(src)
+            if problem:
+                bad.append(f"  {wav} {problem}")
             z.write(src, f"Audio/{wav}")
+    if bad:
+        zip_path.unlink(missing_ok=True)
+        sys.exit("package: audio not in 3CX prompt format (8kHz mono 16-bit PCM):\n" + "\n".join(bad))
         z.writestr("Sources/Main.cs", main_cs)
     return zip_path
 
