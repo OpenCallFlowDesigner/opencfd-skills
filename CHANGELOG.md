@@ -4,6 +4,24 @@ All notable changes to this plugin are documented here. Format based on [Keep a 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-08
+
+### Added
+- **Deterministic build tooling** (`tools/cfd/`): a `validate → transpile → package`
+  pipeline with a golden-diff harness. Manifest generation and packaging are real; the
+  `Main.cs` slots are pinned to golden pending Phase-1 generators. Wired into CI.
+- **Golden corpus**: text artifacts (`Sources/Main.cs` + `manifest.xml` +
+  `audio_manifest.txt`) extracted from Studio builds of 9 official demos, under `golden/`.
+  Preserved verbatim (CRLF) as a build oracle.
+- **WAV format check** (8kHz/mono/16-bit PCM) shared by the validator and builder.
+- **Component support matrix** (`COMPONENT_SUPPORT.md`) vs the official 3CX component list.
+- Augmented demo sources synced to match their captured builds.
+
+
+### Documented
+- SPEC §3: the audio-bundling pruning rule — only referenced wavs are packaged, and audio
+  in disabled sub-flows (e.g. `IsSecurityCodeRequired="False"`) is excluded.
+
 ## [0.1.5] - 2026-06-23
 
 ### Added

@@ -19,8 +19,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install test deps
         run: pip install pytest
-      - name: Run validator tests
-        run: python -m pytest tests/ -v
+      - name: Run validator + builder golden tests
+        run: python -m pytest tests/ tools/cfd/tests/ -v
 
   validate-manifests:
     runs-on: ubuntu-latest
