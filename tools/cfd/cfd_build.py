@@ -145,11 +145,11 @@ def transpile(project: Project, namespace: str) -> str:
     return out
 
 
-def gen_manifest(project: Project, extension: str, version: str) -> str:
+def gen_manifest(app_name: str, extension: str, version: str) -> str:
     return (
         '<?xml version="1.0" encoding="utf-8"?>\n'
         "<cfd_app_package>\n"
-        f"  <name>{project.name.lower()}.Main</name>\n"
+        f"  <name>{app_name.lower()}.Main</name>\n"
         f"  <extension>{extension}</extension>\n"
         f"  <version>{version}</version>\n"
         "</cfd_app_package>"
@@ -179,11 +179,11 @@ def package(project: Project, main_cs: str, manifest: str) -> Path:
 def build(project_dir: Path, extension: str, version: str, namespace: str | None,
           skip_validate: bool = False) -> Path:
     project = Project(project_dir)
-    namespace = namespace or project.name
+    app_name = namespace or project.name  # names both the C# namespace and the manifest <name>
     if not skip_validate:
         validate(project)
-    main_cs = transpile(project, namespace)
-    manifest = gen_manifest(project, extension, version)
+    main_cs = transpile(project, app_name)
+    manifest = gen_manifest(app_name, extension, version)
     zip_path = package(project, main_cs, manifest)
     pinned = [k for k, v in SLOT_MODE.items() if v == "pin"]
     print(f"build: OK -> {zip_path}")
@@ -195,9 +195,12 @@ def build(project_dir: Path, extension: str, version: str, namespace: str | None
 def main() -> None:
     ap = argparse.ArgumentParser(description="Deterministic 3CX CFD builder")
     ap.add_argument("project", type=Path, help="path to a CFD source project dir")
-    ap.add_argument("--extension", default="1975", help="deploy extension number (manifest)")
+    ap.add_argument("--extension", required=True,
+                    help="target 3CX extension number the app deploys to (manifest <extension>). "
+                         "Per-deployment; not stored in .cfdproj — you must supply it.")
     ap.add_argument("--cfd-version", dest="version", default="20.2.84.0", help="CFD tool version (manifest)")
-    ap.add_argument("--namespace", default=None, help="override C# namespace (default: project name)")
+    ap.add_argument("--name", dest="namespace", default=None,
+                    help="project/app name = C# namespace + manifest name (default: project dir name)")
     ap.add_argument("--skip-validate", action="store_true")
     a = ap.parse_args()
     build(a.project, a.extension, a.version, a.namespace, a.skip_validate)

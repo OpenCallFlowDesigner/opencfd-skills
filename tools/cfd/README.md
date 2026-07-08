@@ -26,8 +26,10 @@ golden/{Project}/         # ground truth captured from 3CX Studio builds
 
 ```bash
 # build (validate + transpile + package -> Output/Release/{Project}.zip)
+# --extension is the TARGET 3CX extension the app deploys to. It is required
+# (per-deployment; not stored in .cfdproj). --name overrides the app/namespace.
 python3 tools/cfd/cfd_build.py references/3cx-official-demos/CreditCard \
-    --extension 1975 --cfd-version 20.2.84.0
+    --extension <target-ext> [--name CreditCard] [--cfd-version 20.2.84.0]
 
 # correctness gate
 python3 -m pytest tools/cfd/tests -q
