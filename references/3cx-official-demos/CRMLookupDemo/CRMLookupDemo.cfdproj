@@ -8,19 +8,16 @@
     <ArrayOfVariable xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" />
   </Variables>
   <DebugBuildSuccessful>False</DebugBuildSuccessful>
-  <ReleaseBuildSuccessful>False</ReleaseBuildSuccessful>
+  <ReleaseBuildSuccessful>True</ReleaseBuildSuccessful>
   <DebugBuildNumber>0</DebugBuildNumber>
-  <ReleaseBuildNumber>1</ReleaseBuildNumber>
+  <ReleaseBuildNumber>3</ReleaseBuildNumber>
   <ChangedSinceLastDebugBuild>True</ChangedSinceLastDebugBuild>
   <DoNotAskForExtension>False</DoNotAskForExtension>
-  <Extension>
-  </Extension>
-  <OnlineServicesTextToSpeechEngine>None</OnlineServicesTextToSpeechEngine>
+  <Extension>crmlookup</Extension>
+  <OnlineServicesTextToSpeechEngine>AmazonPolly</OnlineServicesTextToSpeechEngine>
   <OnlineServicesSpeechToTextEngine>None</OnlineServicesSpeechToTextEngine>
-  <AmazonClientID>
-  </AmazonClientID>
-  <AmazonClientSecret>
-  </AmazonClientSecret>
+  <AmazonClientID>45412</AmazonClientID>
+  <AmazonClientSecret>7874547</AmazonClientSecret>
   <AmazonRegion>us-east-2</AmazonRegion>
   <AmazonLexicons>
   </AmazonLexicons>

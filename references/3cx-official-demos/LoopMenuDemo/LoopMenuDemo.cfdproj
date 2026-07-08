@@ -10,11 +10,10 @@
   <DebugBuildSuccessful>False</DebugBuildSuccessful>
   <ReleaseBuildSuccessful>True</ReleaseBuildSuccessful>
   <DebugBuildNumber>0</DebugBuildNumber>
-  <ReleaseBuildNumber>3</ReleaseBuildNumber>
+  <ReleaseBuildNumber>4</ReleaseBuildNumber>
   <ChangedSinceLastDebugBuild>True</ChangedSinceLastDebugBuild>
   <DoNotAskForExtension>False</DoNotAskForExtension>
-  <Extension>
-  </Extension>
+  <Extension>loopmenu</Extension>
   <OnlineServicesTextToSpeechEngine>None</OnlineServicesTextToSpeechEngine>
   <OnlineServicesSpeechToTextEngine>None</OnlineServicesSpeechToTextEngine>
   <AmazonClientID>
