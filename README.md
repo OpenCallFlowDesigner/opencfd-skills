@@ -16,6 +16,7 @@ Plus:
 - **Auto-validation** on every `.flow` / `.cfdproj` write — the hook catches mistakes before you do.
 - **20 bundled reference demos** from 3CX (Menu, IVR, CRM lookup, Authentication, Database, Survey, Dialer, etc.) that the model consults when generating.
 - **Full component + expression spec** (`references/SPEC.md`) covering the C# boilerplate template, variable system, and expression wrapping rules.
+- **Component support matrix** ([`COMPONENT_SUPPORT.md`](COMPONENT_SUPPORT.md)) — coverage of every 3CX CFD component across spec, validator, and golden builds (25 Full · 2 Partial).
 
 ## Install
 
